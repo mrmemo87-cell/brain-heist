@@ -1,8 +1,12 @@
 'use client';
 import { supabase } from './supabaseClient';
 
-export async function rpc<T=any>(fn: string, args?: Record<string, any>) {
-  const { data, error } = await supabase.rpc<T>(fn, args ?? {});
+/**
+ * Generic RPC helper.
+ * Note: We don't pass a generic to supabase.rpc() directly to avoid TS mismatch across SDK versions.
+ */
+export async function rpc<T = any>(fn: string, args?: Record<string, any>) {
+  const { data, error } = await supabase.rpc(fn, args ?? {});
   if (error) throw new Error(error.message);
   return data as T;
 }
@@ -20,6 +24,6 @@ export const api = {
   equipFlair: (key: string) => rpc('rpc_equip_flair', { _item_key: key }),
   unequipFlair: () => rpc('rpc_unequip_flair'),
   hackAttempt: (defenderUuid: string) => rpc('rpc_hack_attempt', { _def: defenderUuid }),
-  leaderboard: (scope: 'batch'|'global', batch?: string, limit=10) =>
+  leaderboard: (scope: 'batch' | 'global', batch?: string, limit = 10) =>
     rpc('rpc_leaderboard', { _scope: scope, _batch: batch ?? null, _limit: limit }),
 };
