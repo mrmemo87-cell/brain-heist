@@ -29,12 +29,7 @@ export default function SignupClient() {
       return setErr(error.message);
     }
     try {
-      // Initializes profile & locks batch (must exist in DB)
-      await supabase.rpc('rpc_register', {
-        _batch: batch,
-        _username: username,
-        _avatar_url: null
-      });
+      await supabase.rpc('rpc_register', { _batch: batch, _username: username, _avatar_url: null });
     } catch (e: any) {
       setErr(e.message ?? 'Registration RPC failed');
     }
@@ -42,20 +37,24 @@ export default function SignupClient() {
     r.replace('/tasks');
   };
 
+  const signInWithGoogle = async () => {
+    setErr(null);
+    const redirectTo = `${window.location.origin}/tasks`;
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo }
+    });
+    if (error) setErr(error.message);
+  };
+
   return (
     <div className="space-y-6 p-6">
       <h1 className="text-xl font-semibold">Create your account</h1>
+
       <form onSubmit={go} className="space-y-3">
         <div className="grid grid-cols-3 gap-2">
           {(['8A','8B','8C'] as const).map(b => (
-            <button
-              key={b}
-              type="button"
-              onClick={() => setBatch(b)}
-              className={`p-2 rounded ${batch === b ? 'bg-emerald-600' : 'bg-slate-800'}`}
-            >
-              {b}
-            </button>
+            <button key={b} type="button" onClick={() => setBatch(b)} className={`p-2 rounded ${batch === b ? 'bg-emerald-600' : 'bg-slate-800'}`}>{b}</button>
           ))}
         </div>
         <input className="w-full bg-slate-900 p-2 rounded" placeholder="Username" value={username} onChange={(e)=>setUsername(e.target.value)} />
@@ -64,6 +63,13 @@ export default function SignupClient() {
         {err && <p className="text-red-400 text-sm">{err}</p>}
         <button disabled={loading} className="px-4 py-2 bg-emerald-600 rounded">{loading ? 'Creating…' : 'Sign up'}</button>
       </form>
+
+      <div className="text-sm text-slate-400">or</div>
+
+      <button onClick={signInWithGoogle} className="px-4 py-2 bg-white text-slate-900 rounded">
+        Continue with Google
+      </button>
+
       <p className="text-sm text-slate-400">Have an account? <a className="underline" href="/login">Log in</a></p>
     </div>
   );
