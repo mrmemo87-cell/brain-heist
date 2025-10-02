@@ -2,6 +2,8 @@
 import { AuthGate } from '@/components/AuthGate';
 import { api } from '@/lib/rpc';
 import { useEffect, useState } from 'react';
+import { supabase } from '@/lib/supabaseClient';
+import { api } from '@/lib/rpc';
 
 type TaskRow = {
   id: number; kind: 'daily'|'weekly'; code: string; title: string; description: string;
@@ -11,14 +13,35 @@ type TaskRow = {
 export default function Tasks() {
   const [tasks,setTasks]=useState<TaskRow[]>([]);
   const [loading,setLoading]=useState(true);
-  const refresh = async () => {
-    setLoading(true);
+ const refresh = async () => {
+  setLoading(true);
+  try {
+    // 1) ensure there is a profile row
+    const { data: auth } = await supabase.auth.getUser();
+    const email = auth.user?.email ?? 'player';
+    const usernameFallback = email.split('@')[0];
+
+    const me = await api.profileMe() as any[];
+    if (!me || me.length === 0) {
+      // pick a default batch if you haven't assigned yet; adjust as needed
+      await supabase.rpc('rpc_register', {
+        _batch: '8A',                 // <- change if you want a different default
+        _username: usernameFallback,  // or prompt later
+        _avatar_url: null
+      });
+    }
+
+    // 2) normal bootstrap + list
     await api.touchLogin();
     await api.tasksBootstrap();
     const list = await api.tasksList();
     setTasks(list as TaskRow[]);
-    setLoading(false);
-  };
+  } catch (e:any) {
+    console.error(e);
+  }
+  setLoading(false);
+};
+
   useEffect(()=>{ refresh(); },[]);
 
   const submit = async (id:number) => { await api.taskSubmit(id,1); await refresh(); };
