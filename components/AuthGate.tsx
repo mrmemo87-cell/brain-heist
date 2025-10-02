@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabaseClient';
 
-export function AuthGate({ children }: { children: React.ReactNode }) {
+export default function AuthGate({ children }: { children: React.ReactNode }) {
   const [ready, setReady] = useState(false);
   const router = useRouter();
 
@@ -23,7 +23,6 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
         if (!session) router.replace('/login');
         else setReady(true);
       });
-
       unsub = () => listener.subscription.unsubscribe();
     })();
 
