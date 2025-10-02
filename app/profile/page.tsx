@@ -1,5 +1,7 @@
 'use client';
-import { AuthGate } from '@/components/AuthGate';
+export const dynamic = 'force-dynamic';
+
+import AuthGate from '@/components/AuthGate';
 import { api } from '@/lib/rpc';
 import { useEffect, useState } from 'react';
 
