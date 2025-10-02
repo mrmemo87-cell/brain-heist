@@ -1,9 +1,14 @@
-// at top of file:
+// add at top with Logout import
 import dynamic from 'next/dynamic';
 const LogoutButton = dynamic(() => import('@/components/LogoutButton'), { ssr: false });
+const HeaderStatus = dynamic(() => import('@/components/HeaderStatus'), { ssr: false });
 
-// inside <header> right after nav:
-<LogoutButton />
+// inside <header> (e.g., right side, under nav)
+<div className="flex items-center gap-4">
+  <HeaderStatus />
+  <LogoutButton />
+</div>
+
 export const metadata = { title: 'Brain Heist', description: 'Persistent world game' };
 
 export default function RootLayout({ children }: {children: React.ReactNode}) {
