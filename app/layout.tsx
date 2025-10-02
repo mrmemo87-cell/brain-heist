@@ -1,3 +1,9 @@
+// at top of file:
+import dynamic from 'next/dynamic';
+const LogoutButton = dynamic(() => import('@/components/LogoutButton'), { ssr: false });
+
+// inside <header> right after nav:
+<LogoutButton />
 export const metadata = { title: 'Brain Heist', description: 'Persistent world game' };
 
 export default function RootLayout({ children }: {children: React.ReactNode}) {
