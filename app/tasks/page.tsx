@@ -1,4 +1,8 @@
 'use client';
+// add imports:
+import { Card, CardRow } from '@/components/ui/Card';
+import Badge from '@/components/ui/Badge';
+import Button from '@/components/ui/Button';
 import { AuthGate } from '@/components/AuthGate';
 import { api } from '@/lib/rpc';
 import { useEffect, useState } from 'react';
@@ -71,6 +75,26 @@ export default function Tasks() {
           ))}
         </div>
       }
+      // inside your return, replace the map:
+{tasks.map(t => (
+  <Card key={t.id} className="space-y-2">
+    <CardRow>
+      <div>
+        <div className="subtle uppercase">{t.kind}</div>
+        <div className="font-semibold">{t.title}</div>
+        <div className="text-sm text-ink-300">{t.description}</div>
+      </div>
+      <div className="text-sm">
+        <Badge>{t.progress}/{t.target_int}</Badge>
+      </div>
+    </CardRow>
+    <div className="flex gap-2">
+      {!t.completed && <Button variant="ghost" onClick={()=>submit(t.id)}>+1</Button>}
+      {t.completed && !t.claimed && <Button onClick={()=>claim(t.id)}>Claim</Button>}
+      {t.claimed && <span className="text-primary">Claimed</span>}
+    </div>
+  </Card>
+))}
     </AuthGate>
   );
 }
