@@ -1,7 +1,5 @@
 import './globals.css';
 import Link from 'next/link';
-
-// ✅ import client components directly (no dynamic)
 import LogoutButton from '@/components/LogoutButton';
 import HeaderStatus from '@/components/HeaderStatus';
 
