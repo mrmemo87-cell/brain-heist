@@ -1,0 +1,21 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* App base look */
+:root {
+  color-scheme: dark;
+}
+
+html, body {
+  @apply bg-ink-950 text-ink-50;
+}
+
+.container {
+  @apply max-w-4xl mx-auto px-4;
+}
+
+/* Headings */
+.h1 { @apply text-2xl font-semibold; }
+.h2 { @apply text-xl font-semibold; }
+.subtle { @apply text-sm text-ink-300; }
