@@ -7,6 +7,9 @@
 }
 
 /* Theme base */
+:root[data-theme='cyber'] .btn-primary { @apply bg-cyan-500 hover:bg-cyan-600; }
+:root[data-theme='forest'] .btn-primary { @apply bg-emerald-500 hover:bg-emerald-600; }
+:root[data-theme='rose'] .btn-primary { @apply bg-rose-500 hover:bg-rose-600; }
 :root { color-scheme: dark; }
 html, body { @apply bg-ink-950 text-ink-50; }
 .container { @apply max-w-4xl mx-auto px-4; }
