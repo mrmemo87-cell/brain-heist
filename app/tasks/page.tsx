@@ -1,4 +1,6 @@
 import QuestionModal from '@/components/QuestionModal';
+await api.taskClaim(id); SFX.claim();
+
 // ...
 const [qid,setQid]=useState<number|null>(null);
 // ...
