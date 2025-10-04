@@ -10,9 +10,8 @@ export default function AppHeader() {
   const isActive = (href: string) =>
     path === href || (href !== '/' && path.startsWith(href));
 
-  const a = (href: string, label: string) => (
+  const NavLink = ({ href, label }: { href: string; label: string }) => (
     <Link
-      key={href}
       href={href}
       className={[
         'px-3 py-1.5 rounded-lg text-sm',
@@ -24,19 +23,19 @@ export default function AppHeader() {
   );
 
   return (
-    <header className="border-b border-ink-900 bg-ink-950/60 backdrop-blur supports-[backdrop-filter]:bg-ink-950/40">
+    <header className="header-glass">
       <div className="container py-3 flex items-center justify-between">
         <Link href="/" className="font-semibold">
-  <span className="bg-gradient-to-r from-emerald-400 via-teal-300 to-violet-400 bg-clip-text text-transparent">
-    🧠 Brain Heist
-  </span>
-</Link>
+          <span className="bg-gradient-to-r from-emerald-400 via-teal-300 to-violet-400 bg-clip-text text-transparent">
+            🧠 Brain Heist
+          </span>
+        </Link>
         <nav className="flex items-center gap-1">
-          {a('/tasks','Tasks')}
-          {a('/shop','Shop')}
-          {a('/profile','Profile')}
-          {a('/leaderboard','Leaderboard')}
-          {a('/login','Login')}
+          <NavLink href="/tasks" label="Tasks" />
+          <NavLink href="/shop" label="Shop" />
+          <NavLink href="/profile" label="Profile" />
+          <NavLink href="/leaderboard" label="Leaderboard" />
+          <NavLink href="/login" label="Login" />
         </nav>
         <div className="flex items-center gap-4">
           <HeaderStatus />
