@@ -20,6 +20,14 @@ type Me = {
   flair_image_url: string | null;
   flair_thumb_url: string | null;
 };
+type Inv = { item_id:number; key:string; name:string; qty:number; kind:string };
+const [inv,setInv]=useState<Inv[]>([]);
+
+const load = async () => {
+  // ... existing
+  const invList = await api.rpc<any[]>('rpc_inventory');
+  setInv(invList ?? []);
+};
 
 export default function Profile() {
   const [me, setMe] = useState<Me | null>(null);
@@ -100,6 +108,25 @@ export default function Profile() {
     </AuthGate>
   );
 }
+<div className="pt-4">
+  <div className="text-sm text-ink-300 mb-2">Inventory</div>
+  {inv.length === 0 && <div className="text-ink-400 text-sm">Empty</div>}
+  <div className="grid md:grid-cols-2 gap-3">
+    {inv.map(it=>(
+      <div key={it.item_id} className="card p-3 flex items-center justify-between">
+        <div>
+          <div className="font-medium">{it.name}</div>
+          <div className="text-xs text-ink-400">{it.key} • x{it.qty}</div>
+        </div>
+        {it.kind==='consumable' ? (
+          <button className="btn btn-ghost" onClick={async()=>{ await api.activateItem(it.key); await load(); }}>Activate</button>
+        ) : it.key.startsWith('flair_') ? (
+          <button className="btn btn-ghost" onClick={async()=>{ await api.equipFlair(it.key); await load(); }}>Equip</button>
+        ) : null}
+      </div>
+    ))}
+  </div>
+</div>
 
 function Stat({ label, value }: { label: string; value: number | string }) {
   return (
