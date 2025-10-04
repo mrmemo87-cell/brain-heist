@@ -26,7 +26,11 @@ export default function AppHeader() {
   return (
     <header className="border-b border-ink-900 bg-ink-950/60 backdrop-blur supports-[backdrop-filter]:bg-ink-950/40">
       <div className="container py-3 flex items-center justify-between">
-        <Link href="/" className="font-semibold">🧠 Brain Heist</Link>
+        <Link href="/" className="font-semibold">
+  <span className="bg-gradient-to-r from-emerald-400 via-teal-300 to-violet-400 bg-clip-text text-transparent">
+    🧠 Brain Heist
+  </span>
+</Link>
         <nav className="flex items-center gap-1">
           {a('/tasks','Tasks')}
           {a('/shop','Shop')}
