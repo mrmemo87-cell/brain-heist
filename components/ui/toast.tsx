@@ -25,6 +25,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
     </Ctx.Provider>
   );
 }
+
 export function useToast() {
   const ctx = useContext(Ctx);
   if (!ctx) throw new Error('ToastProvider missing');
