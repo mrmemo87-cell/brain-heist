@@ -5,6 +5,8 @@ import AuthGate from '@/components/AuthGate';
 import { api } from '@/lib/rpc';
 import { useEffect, useState } from 'react';
 import { useToast } from '@/components/ui/toast';
+await api.shopBuy(id); SFX.buy();
+await api.activateItem(key); SFX.activate();
 
 type ShopItem = {
   item_id: number;
