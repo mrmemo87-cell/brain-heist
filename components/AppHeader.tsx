@@ -10,7 +10,7 @@ export default function AppHeader() {
   const isActive = (href: string) =>
     path === href || (href !== '/' && path.startsWith(href));
 
-  const navLink = (href: string, label: string) => (
+  const a = (href: string, label: string) => (
     <Link
       key={href}
       href={href}
@@ -28,11 +28,11 @@ export default function AppHeader() {
       <div className="container py-3 flex items-center justify-between">
         <Link href="/" className="font-semibold">🧠 Brain Heist</Link>
         <nav className="flex items-center gap-1">
-          {navLink('/tasks', 'Tasks')}
-          {navLink('/shop', 'Shop')}
-          {navLink('/profile', 'Profile')}
-          {navLink('/leaderboard', 'Leaderboard')}
-          {navLink('/login', 'Login')}
+          {a('/tasks','Tasks')}
+          {a('/shop','Shop')}
+          {a('/profile','Profile')}
+          {a('/leaderboard','Leaderboard')}
+          {a('/login','Login')}
         </nav>
         <div className="flex items-center gap-4">
           <HeaderStatus />
