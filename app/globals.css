@@ -1,0 +1,41 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+/* Theme base */
+:root[data-theme='cyber'] .btn-primary { @apply bg-cyan-500 hover:bg-cyan-600; }
+:root[data-theme='forest'] .btn-primary { @apply bg-emerald-500 hover:bg-emerald-600; }
+:root[data-theme='rose'] .btn-primary { @apply bg-rose-500 hover:bg-rose-600; }
+:root { color-scheme: dark; }
+html, body { @apply bg-ink-950 text-ink-50; }
+.container { @apply max-w-4xl mx-auto px-4; }
+.h1 { @apply text-2xl font-semibold tracking-tight; }
+.subtle { @apply text-sm text-ink-300; }
+
+/* Background glow */
+.bg-game {
+  background:
+    radial-gradient(1200px 600px at 10% -10%, rgba(16,185,129,0.18), transparent 60%),
+    radial-gradient(900px 500px at 110% 0%, rgba(139,92,246,0.20), transparent 55%),
+    radial-gradient(800px 400px at 50% 120%, rgba(20,184,166,0.12), transparent 60%),
+    #0e101c;
+}
+
+/* Cards + buttons */
+.card { @apply bg-ink-900/70 border border-ink-800 rounded-2xl shadow-soft; backdrop-filter: blur(6px); }
+.card-hover { @apply transition hover:shadow-[0_10px_30px_rgba(0,0,0,0.35)] hover:border-ink-700; }
+
+.btn { @apply inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm transition active:scale-[0.98]; }
+.btn-primary { @apply bg-primary text-white hover:bg-primary-600; }
+.btn-ghost { @apply bg-ink-800 hover:bg-ink-700 text-ink-100; }
+
+/* Header glass */
+.header-glass { @apply border-b border-ink-900 bg-ink-950/60; backdrop-filter: blur(6px); }
+
+/* Progress bar */
+.progress { @apply w-full h-2 rounded-full bg-ink-800 overflow-hidden; }
+.progress > span { @apply block h-full bg-primary; }
