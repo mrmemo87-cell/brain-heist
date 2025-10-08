@@ -1,7 +1,7 @@
 'use client';
 import { supabase } from './supabaseClient';
 
-/**
+/*
  * Generic RPC helper.
  * Note: We don't pass a generic to supabase.rpc() directly to avoid TS mismatch across SDK versions.
  */
