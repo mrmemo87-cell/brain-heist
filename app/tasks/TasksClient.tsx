@@ -1,30 +1,41 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState, startTransition } from 'react';
+import { useCallback, useEffect, useRef, useState, startTransition, memo } from 'react';
+import { Virtuoso } from 'react-virtuoso';
 import { supabase } from '@/lib/supa';
-import TaskItem from './TaskItem';
 
-type Task = { id: string; created_at: string; status?: string; [k: string]: any };
+type Task = {
+  id: string;
+  created_at: string;
+  status?: string;
+  // add any other columns you use:
+  // title?: string;
+  // prompt?: string;
+  [k: string]: any;
+};
 
 export default function TasksClient({ initialTasks = [] as Task[] }) {
   const [tasks, setTasks] = useState<Task[]>(initialTasks);
-  const mounted = useRef(false);
+  const subReady = useRef(false);
 
-  // subscribe ONCE; clean up on unmount; filter to the table you need
+  // --- realtime subscription: ONCE + proper cleanup ---
   useEffect(() => {
-    mounted.current = true;
+    if (subReady.current) return;
+    subReady.current = true;
 
     const channel = supabase
       .channel('tasks-updates')
       .on(
         'postgres_changes',
-        { event: '*', schema: 'public', table: 'tasks' }, // add `filter: 'user_id=eq.<uuid>'` if applicable
+        { event: '*', schema: 'public', table: 'tasks' },
         (payload: any) => {
           startTransition(() => {
             setTasks(prev => {
               if (payload.eventType === 'INSERT') return [payload.new, ...prev];
-              if (payload.eventType === 'UPDATE') return prev.map(t => (t.id === payload.new.id ? { ...t, ...payload.new } : t));
-              if (payload.eventType === 'DELETE') return prev.filter(t => t.id !== payload.old.id);
+              if (payload.eventType === 'UPDATE')
+                return prev.map(t => (t.id === payload.new.id ? { ...t, ...payload.new } : t));
+              if (payload.eventType === 'DELETE')
+                return prev.filter(t => t.id !== payload.old.id);
               return prev;
             });
           });
@@ -33,12 +44,12 @@ export default function TasksClient({ initialTasks = [] as Task[] }) {
       .subscribe();
 
     return () => {
-      mounted.current = false;
       supabase.removeChannel(channel);
+      subReady.current = false;
     };
   }, []);
 
-  // answer handler (no full refetch, optimistic update)
+  // --- optimistic answer handler (no full refetch) ---
   const submitAnswer = useCallback(async (taskId: string, answer: string) => {
     setTasks(prev => prev.map(t => (t.id === taskId ? { ...t, status: 'submitting' } : t)));
 
@@ -49,17 +60,47 @@ export default function TasksClient({ initialTasks = [] as Task[] }) {
       return;
     }
 
-    // Let realtime bring final state; just mark as answered
+    // realtime will sync the final row; we keep UI snappy
     setTasks(prev => prev.map(t => (t.id === taskId ? { ...t, status: 'answered' } : t)));
   }, []);
 
   return (
     <main className="p-6">
-      <ul className="space-y-2">
-        {tasks.map(t => (
-          <TaskItem key={t.id} task={t} onAnswer={submitAnswer} />
-        ))}
-      </ul>
+      <Virtuoso
+        style={{ height: 'calc(100vh - 140px)' }} // adjust as you like
+        data={tasks}
+        itemContent={(index, t) => <TaskRow task={t} onAnswer={submitAnswer} />}
+      />
     </main>
   );
 }
+
+// ---- row (memoized to avoid re-render storms) ----
+const TaskRow = memo(function TaskRow({
+  task,
+  onAnswer,
+}: {
+  task: Task;
+  onAnswer: (id: string, answer: string) => void;
+}) {
+  return (
+    <div className="rounded border p-3">
+      <div className="text-sm opacity-70 mb-2">
+        {new Date(task.created_at).toLocaleString()}
+      </div>
+
+      {/* replace with your real task UI */}
+      <div className="flex items-center gap-2">
+        <button
+          className="rounded bg-black/80 px-3 py-1 text-white"
+          onClick={() => onAnswer(task.id, '42')}
+        >
+          Answer “42”
+        </button>
+        {task.status && (
+          <span className="text-xs opacity-70">status: {task.status}</span>
+        )}
+      </div>
+    </div>
+  );
+});
