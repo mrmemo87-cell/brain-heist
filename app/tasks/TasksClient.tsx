@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState, startTransition, memo } from "react";
+import { useRouter } from "next/navigation";
 import { Virtuoso } from "react-virtuoso";
 import { supabase } from "@/lib/supa";
 
@@ -11,53 +12,90 @@ type Task = {
   [k: string]: any;
 };
 
-export default function TasksClient({ initialTasks = [] as Task[] }) {
-  const [tasks, setTasks] = useState<Task[]>(initialTasks);
+export default function TasksClient() {
+  const router = useRouter();
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const mounted = useRef(true);
   const subReady = useRef(false);
 
-  // subscribe ONCE; clean up on unmount
   useEffect(() => {
-    if (subReady.current) return;
-    subReady.current = true;
+    mounted.current = true;
 
-    const channel = supabase
-      .channel("tasks-updates")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "tasks" },
-        (payload: any) => {
+    // 1) Ensure user is signed in (client-side)
+    const init = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        router.replace("/login");
+        return;
+      }
+
+      // 2) Try to call session-start RPC if it exists (both common names). Ignore errors.
+      const tryRPC = async (name: string) => {
+        try {
+          const { error } = await supabase.rpc(name, {});
+          return !error;
+        } catch {
+          return false;
+        }
+      };
+      await (tryRPC("session_start") || tryRPC("rpc_session_start"));
+
+      // 3) Fetch initial tasks (no full refetch after actions; realtime will keep it fresh)
+      const { data, error } = await supabase
+        .from("tasks")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(50);
+
+      if (!error && data && mounted.current) {
+        setTasks(data as Task[]);
+      }
+    };
+
+    init();
+
+    // 4) Single realtime subscription + cleanup
+    if (!subReady.current) {
+      subReady.current = true;
+      const ch = supabase
+        .channel("tasks-updates")
+        .on("postgres_changes", { event: "*", schema: "public", table: "tasks" }, (payload: any) => {
           startTransition(() => {
-            setTasks((prev) => {
+            setTasks(prev => {
               if (payload.eventType === "INSERT") return [payload.new, ...prev];
-              if (payload.eventType === "UPDATE")
-                return prev.map((t) => (t.id === payload.new.id ? { ...t, ...payload.new } : t));
-              if (payload.eventType === "DELETE")
-                return prev.filter((t) => t.id !== payload.old.id);
+              if (payload.eventType === "UPDATE") return prev.map(t => (t.id === payload.new.id ? { ...t, ...payload.new } : t));
+              if (payload.eventType === "DELETE") return prev.filter(t => t.id !== payload.old.id);
               return prev;
             });
           });
-        }
-      )
-      .subscribe();
+        })
+        .subscribe();
+
+      return () => {
+        mounted.current = false;
+        supabase.removeChannel(ch);
+        subReady.current = false;
+      };
+    }
 
     return () => {
-      supabase.removeChannel(channel);
-      subReady.current = false;
+      mounted.current = false;
     };
-  }, []);
+  }, [router]);
 
+  // Optimistic answer handler (no full refetch)
   const submitAnswer = useCallback(async (taskId: string, answer: string) => {
-    setTasks((prev) => prev.map((t) => (t.id === taskId ? { ...t, status: "submitting" } : t)));
+    setTasks(prev => prev.map(t => (t.id === taskId ? { ...t, status: "submitting" } : t)));
 
     const { error } = await supabase.from("answers").insert({ task_id: taskId, answer });
     if (error) {
       console.error("submit error", error);
-      setTasks((prev) => prev.map((t) => (t.id === taskId ? { ...t, status: "error" } : t)));
+      setTasks(prev => prev.map(t => (t.id === taskId ? { ...t, status: "error" } : t)));
       return;
     }
 
-    // realtime will sync the final row; keep UI snappy
-    setTasks((prev) => prev.map((t) => (t.id === taskId ? { ...t, status: "answered" } : t)));
+    setTasks(prev => prev.map(t => (t.id === taskId ? { ...t, status: "answered" } : t)));
+    // Realtime will bring the final canonical state
   }, []);
 
   return (
