@@ -20,7 +20,7 @@ export default function TasksClient() {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) { router.replace("/login"); return; }
 
-      // initial fetch from public.questions (ordered by id)
+      // initial fetch from questions (order by id for now)
       const { data, error } = await supabase
         .from("questions")
         .select("*")
@@ -62,15 +62,24 @@ export default function TasksClient() {
   }, [router]);
 
   const submitAnswer = useCallback(async (questionId: string, answer: string) => {
+    // get current user id for RLS
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) { router.replace("/login"); return; }
+
     setTasks(prev => prev.map(t => (t.id === questionId ? { ...t, status: "submitting" } : t)));
-    const { error } = await supabase.from("answers").insert({ question_id: questionId, answer });
+
+    const { error } = await supabase
+      .from("answers")
+      .insert({ question_id: questionId, user_id: user.id, answer });
+
     if (error) {
       console.error("submit error:", error.message ?? JSON.stringify(error));
       setTasks(prev => prev.map(t => (t.id === questionId ? { ...t, status: "error" } : t)));
       return;
     }
+
     setTasks(prev => prev.map(t => (t.id === questionId ? { ...t, status: "answered" } : t)));
-  }, []);
+  }, [router]);
 
   return (
     <main className="p-6">
