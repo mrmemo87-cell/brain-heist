@@ -18,7 +18,7 @@ export default function TasksClient() {
 
     const init = async () => {
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session) { router.replace("/login"); return; }   // ⬅ redirect if not authed
+      if (!session) { router.replace("/login"); return; }   // в¬… redirect if not authed
 
       // initial fetch from QUESTIONS table
       const { data, error } = await supabase
@@ -27,7 +27,7 @@ export default function TasksClient() {
         .order("created_at", { ascending: false })
         .limit(50);
 
-      if (error) console.error("questions fetch error:", error);
+      if (error) console.error("questions fetch error:", (error?.message ?? JSON.stringify(error)));
       if (!error && data && mounted.current) setTasks(data as Task[]);
     };
     init();
@@ -83,7 +83,7 @@ export default function TasksClient() {
             </div>
             <div className="flex items-center gap-2">
               <button className="rounded bg-black/80 px-3 py-1 text-white" onClick={() => submitAnswer(t.id, "42")}>
-                Answer “42”
+                Answer вЂњ42вЂќ
               </button>
               {t.status && <span className="text-xs opacity-70">status: {t.status}</span>}
             </div>
