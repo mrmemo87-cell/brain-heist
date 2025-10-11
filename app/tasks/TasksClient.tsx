@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useCallback, useEffect, useRef, useState, startTransition, memo } from "react";
 import { Virtuoso } from "react-virtuoso";
@@ -56,7 +56,7 @@ export default function TasksClient({ initialTasks = [] as Task[] }) {
       return;
     }
 
-    // realtime will sync the final row
+    // realtime will sync the final row; keep UI snappy
     setTasks((prev) => prev.map((t) => (t.id === taskId ? { ...t, status: "answered" } : t)));
   }, []);
 
