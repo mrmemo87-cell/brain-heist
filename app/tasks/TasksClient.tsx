@@ -1,106 +1,40 @@
-"use client";
-
-import { useCallback, useEffect, useRef, useState, startTransition } from "react";
-import { Virtuoso } from "react-virtuoso";
-import { useRouter } from "next/navigation";
+﻿"use client";
+import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supa";
 
-type Task = { id: string; status?: string; created_at?: string; [k: string]: any };
+type Question = { id: number; prompt: string; options: string[] | null };
 
 export default function TasksClient() {
-  const router = useRouter();
-  const [tasks, setTasks] = useState<Task[]>([]);
-  const mounted = useRef(true);
-  const subReady = useRef(false);
+  const [rows, setRows] = useState<Question[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [err, setErr] = useState<string|null>(null);
 
   useEffect(() => {
-    mounted.current = true;
-
-    const init = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) { router.replace("/login"); return; }
-
-      // initial fetch from questions (order by id for now)
+    (async () => {
       const { data, error } = await supabase
-        .from("questions")
-        .select("*")
+        .from("questions_import2")
+        .select("id,prompt,options")
         .order("id", { ascending: false })
         .limit(50);
 
-      if (error) {
-        console.error("questions fetch error:", error.message ?? JSON.stringify(error));
-      } else if (mounted.current && data) {
-        setTasks(data as Task[]);
-      }
-    };
-    init();
+      if (error) setErr(error.message);
+      else setRows((data ?? []) as Question[]);
+      setLoading(false);
+    })();
+  }, []);
 
-    if (!subReady.current) {
-      subReady.current = true;
-      const ch = supabase
-        .channel("questions-updates")
-        .on("postgres_changes", { event: "*", schema: "public", table: "questions" }, (payload: any) => {
-          startTransition(() => {
-            setTasks(prev => {
-              if (payload.eventType === "INSERT") return [payload.new, ...prev];
-              if (payload.eventType === "UPDATE") return prev.map(t => (t.id === payload.new.id ? { ...t, ...payload.new } : t));
-              if (payload.eventType === "DELETE") return prev.filter(t => t.id !== payload.old.id);
-              return prev;
-            });
-          });
-        })
-        .subscribe();
-
-      return () => {
-        mounted.current = false;
-        supabase.removeChannel(ch);
-        subReady.current = false;
-      };
-    }
-
-    return () => { mounted.current = false; };
-  }, [router]);
-
-  const submitAnswer = useCallback(async (questionId: string, answer: string) => {
-    // get current user id for RLS
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) { router.replace("/login"); return; }
-
-    setTasks(prev => prev.map(t => (t.id === questionId ? { ...t, status: "submitting" } : t)));
-
-    const { error } = await supabase
-      .from("answers")
-      .insert({ question_id: questionId, user_id: user.id, answer });
-
-    if (error) {
-      console.error("submit error:", error.message ?? JSON.stringify(error));
-      setTasks(prev => prev.map(t => (t.id === questionId ? { ...t, status: "error" } : t)));
-      return;
-    }
-
-    setTasks(prev => prev.map(t => (t.id === questionId ? { ...t, status: "answered" } : t)));
-  }, [router]);
+  if (loading) return <main className="p-6">Loading…</main>;
+  if (err) return <main className="p-6 text-red-500">Error: {err}</main>;
 
   return (
-    <main className="p-6">
-      <div className="mb-2 text-xs opacity-70">Using questions order: id • items: {tasks.length}</div>
-      <Virtuoso
-        style={{ height: "calc(100vh - 140px)" }}
-        data={tasks}
-        itemContent={(index, t) => (
-          <div className="rounded border p-3">
-            <div className="text-sm opacity-70 mb-2">
-              {(t.created_at ? new Date(t.created_at) : new Date()).toLocaleString()}
-            </div>
-            <div className="flex items-center gap-2">
-              <button className="rounded bg-black/80 px-3 py-1 text-white" onClick={() => submitAnswer(t.id, "42")}>
-                Answer “42”
-              </button>
-              {t.status && <span className="text-xs opacity-70">status: {t.status}</span>}
-            </div>
-          </div>
-        )}
-      />
+    <main className="p-6 space-y-3">
+      <div className="text-xs opacity-70">Source: public.questions_import2 • items: {rows.length}</div>
+      {rows.map(q => (
+        <div key={q.id} className="rounded border p-3">
+          <div className="text-sm opacity-70 mb-1">id: {q.id}</div>
+          <div className="font-medium">{q.prompt}</div>
+        </div>
+      ))}
     </main>
   );
 }
