@@ -1,206 +1,270 @@
 ﻿"use client";
+
 import { useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supa";
+import { motion, AnimatePresence } from "framer-motion";
 
-type Row = Record<string, any>;
+type QRow = {
+  prompt?: string;
+  options_raw?: any;
+  answer?: number | string;      // 1-based index
+  xp?: number | string;
+  creds?: number | string;
+  active?: boolean | string | number;
+  created_at?: string;
+  [k: string]: any;
+};
 
-function pickKey(cands: string[], obj: Row) {
-  for (const k of cands) if (k in obj) return k;
-  return "";
-}
+function parseOptions(raw: any): string[] {
+  if (Array.isArray(raw)) return raw.map(String);
 
-function coerceOptions(raw: any): string[] {
-  if (Array.isArray(raw)) return raw.map((v) => String(v));
   if (typeof raw === "string") {
-    const s = raw.trim();
-    // try JSON array first
+    let s = raw.trim();
+    // braces: {A,B,C}
+    if (s.startsWith("{") && s.endsWith("}")) {
+      s = s.slice(1, -1);
+      return s.split(",").map(x => x.trim().replace(/^["']|["']$/g, "")).filter(Boolean);
+    }
+    // JSON: ["A","B","C"]  or  { options: [...] }
     if (s.startsWith("[") || s.startsWith("{")) {
       try {
         const j = JSON.parse(s);
-        if (Array.isArray(j)) return j.map((v) => String(v));
-        if (j && Array.isArray(j.options)) return j.options.map((v: any) => String(v));
-      } catch {}
+        if (Array.isArray(j)) return j.map(String);
+        if (j && Array.isArray((j as any).options)) return (j as any).options.map(String);
+      } catch { /* ignore */ }
     }
-    // CSV / pipe-delimited fallback
-    if (s.includes("|")) return s.split("|").map((x) => x.trim()).filter(Boolean);
-    if (s.includes(",")) return s.split(",").map((x) => x.trim()).filter(Boolean);
+    // CSV / pipes
+    if (s.includes("|")) return s.split("|").map(x => x.trim()).filter(Boolean);
+    if (s.includes(",")) return s.split(",").map(x => x.trim()).filter(Boolean);
     return s ? [s] : [];
   }
   return [];
 }
 
-function getCorrectIndex(row: Row, options: string[], correctKey: string) {
-  if (!correctKey) return -1;
-  const val = row[correctKey];
-  if (typeof val === "number") return val;
-  if (typeof val === "string") {
-    const trimmed = val.trim();
-    // numeric-as-string
-    const n = Number(trimmed);
-    if (!Number.isNaN(n)) return n;
-    // match by option text
-    const idx = options.findIndex((o) => o.toLowerCase() === trimmed.toLowerCase());
-    return idx >= 0 ? idx : -1;
-  }
-  return -1;
+function truthy(v: any) {
+  if (typeof v === "boolean") return v;
+  if (typeof v === "number") return v !== 0;
+  if (typeof v === "string") return v.toLowerCase() === "true";
+  return false;
 }
 
 export default function TasksClient() {
-  const router = useRouter();
-  const [rows, setRows] = useState<Row[]>([]);
-  const [i, setI] = useState(0);
+  const [rows, setRows] = useState<QRow[]>([]);
+  const [idx, setIdx] = useState(0);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
+
+  // scoreboard
   const [coins, setCoins] = useState(0);
-  const [answeredIdx, setAnsweredIdx] = useState<number | null>(null); // which option user picked
+  const [xp, setXp] = useState(0);
+  const [creds, setCreds] = useState(0);
+
+  // per-question UI state
+  const [picked, setPicked] = useState<number | null>(null);
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
+  const [burstKey, setBurstKey] = useState(0);
 
   useEffect(() => {
     (async () => {
-      // must be signed in if your RLS requires it
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) { router.replace("/login"); return; }
-
+      // fetch ONLY the columns we use; IGNORE batch entirely
       const { data, error } = await supabase
         .from("questions_import2")
-        .select("*")
+        .select("prompt,options_raw,answer,xp,creds,active,created_at")
+        .order("created_at", { ascending: false })
         .limit(200);
 
       if (error) { setErr(error.message); setLoading(false); return; }
-      setRows((data ?? []) as Row[]);
+
+      const filtered = (data ?? []).filter(r => truthy((r as QRow).active));
+      setRows(filtered as QRow[]);
       setLoading(false);
     })();
-  }, [router]);
+  }, []);
 
-  const current = rows[i] || null;
+  const current = rows[idx] ?? null;
 
-  const meta = useMemo(() => {
-    if (!current) return { idKey: "", promptKey: "", optionsKey: "", correctKey: "", options: [] as string[], correctIdx: -1 };
-    const idKey      = pickKey(["id","qid","question_id","pk","_id"], current);
-    const promptKey  = pickKey(["prompt","question","text","title","body"], current);
-    const optionsKey = pickKey(["options","choices","answers","opts","variants"], current);
-    const correctKey = pickKey(["correct","correct_index","answer_index","correctOption","correct_option","right","right_index"], current);
-    const options    = coerceOptions(current[optionsKey]);
-    const correctIdx = getCorrectIndex(current, options, correctKey);
-    return { idKey, promptKey, optionsKey, correctKey, options, correctIdx };
-  }, [current]);
+  const options = useMemo(() => parseOptions(current?.options_raw), [current]);
+  const correctIdx = useMemo(() => {
+    const a = current?.answer;
+    if (a == null) return -1;
+    const n = Number(a);
+    if (!Number.isFinite(n)) return -1;
+    const zero = Math.max(0, Math.floor(n) - 1); // 1-based -> 0-based
+    return zero < options.length ? zero : -1;
+  }, [current, options]);
 
-  async function submit(choiceIdx: number) {
-    if (!current) return;
+  const rewardXp = Number(current?.xp ?? 0) || 0;
+  const rewardCreds = Number(current?.creds ?? 0) || 0;
 
-    setAnsweredIdx(choiceIdx);
-    const correct = meta.correctIdx >= 0 && choiceIdx === meta.correctIdx;
-    setIsCorrect(correct);
-    setCoins((c) => c + (correct ? 10 : -5));
+  function onPick(i: number) {
+    if (picked !== null) return;
+    setPicked(i);
+    const good = i === correctIdx;
+    setIsCorrect(good);
 
-    // Optional: persist answer
-    const { data: { user } } = await supabase.auth.getUser();
-    if (user) {
-      const qid = meta.idKey ? current[meta.idKey] : null;
-      const answerText = meta.options[choiceIdx] ?? String(choiceIdx);
-      // answers table = { id uuid, question_id bigint, user_id uuid, answer text, created_at ts }
-      // if your question_id is not BIGINT, you already dropped FK so plain insert is fine
-      await supabase.from("answers").insert({
-        question_id: qid ?? null,
-        user_id: user.id,
-        answer: answerText,
-      });
+    if (good) {
+      setCoins(c => c + rewardCreds);
+      setXp(x => x + rewardXp);
+      setCreds(c => c + rewardCreds);
+    } else {
+      const penalty = Math.max(1, Math.ceil(rewardCreds / 2));
+      setCoins(c => c - penalty);
     }
+
+    setBurstKey(k => k + 1); // re-trigger confetti
   }
 
   function next() {
-    setAnsweredIdx(null);
+    setPicked(null);
     setIsCorrect(null);
-    setI((x) => Math.min(x + 1, rows.length)); // go past end to show "done"
+    setIdx(i => Math.min(i + 1, rows.length)); // can go 1 past end -> "done"
   }
 
-  if (loading) return <main className="p-6">Loading…</main>;
+  if (loading) return <main className="min-h-[60vh] grid place-items-center text-sm opacity-70">Loading…</main>;
   if (err) return <main className="p-6 text-red-500">Error: {err}</main>;
   if (!current) {
     return (
-      <main className="p-6 space-y-3">
-        <div className="text-sm opacity-70">All done 👏 — total coins: {coins}</div>
-        <button className="rounded bg-black/80 text-white px-3 py-1" onClick={() => { setI(0); setCoins(0); }}>
-          Restart
-        </button>
+      <main className="p-8 grid place-items-center">
+        <div className="text-center">
+          <div className="text-2xl font-bold mb-2">All done 🎉</div>
+          <div className="opacity-70 mb-4">coins {coins} • xp {xp} • creds {creds}</div>
+          <button
+            className="rounded-xl bg-black text-white px-4 py-2 shadow hover:scale-[1.02] active:scale-95 transition"
+            onClick={() => { setIdx(0); setCoins(0); setXp(0); setCreds(0); }}
+          >
+            Restart
+          </button>
+        </div>
       </main>
     );
   }
 
-  const prompt = meta.promptKey ? String(current[meta.promptKey]) : "(no prompt column found)";
-  const opts = meta.options;
-
   return (
-    <main className="p-6 max-w-xl mx-auto space-y-4">
-      <div className="flex items-center justify-between text-xs opacity-70">
-        <div>question {i+1}/{rows.length}</div>
-        <div>coins: {coins}</div>
-      </div>
-
-      <div className="rounded-2xl border p-4 shadow-sm">
-        <div className="text-base font-medium mb-3">{prompt}</div>
-
-        {opts.length === 0 ? (
-          <div className="text-sm opacity-70">No options column found (looked for: options/choices/answers/opts/variants).</div>
-        ) : (
-          <div className="grid gap-2">
-            {opts.map((opt, idx) => {
-              const picked = answeredIdx === idx;
-              const showResult = answeredIdx !== null;
-              const isRight = meta.correctIdx >= 0 && idx === meta.correctIdx;
-
-              let cls = "rounded border px-3 py-2 text-left";
-              if (showResult) {
-                if (picked && isRight) cls += " bg-green-50 border-green-400";
-                else if (picked && !isRight) cls += " bg-red-50 border-red-400";
-                else if (isRight) cls += " bg-green-50/40 border-green-300";
-              } else {
-                cls += " hover:bg-black/5 cursor-pointer";
-              }
-
-              return (
-                <button
-                  key={idx}
-                  className={cls}
-                  disabled={showResult}
-                  onClick={() => submit(idx)}
-                >
-                  {opt}
-                </button>
-              );
-            })}
+    <main className="min-h-[100vh] bg-gradient-to-br from-zinc-50 to-white dark:from-zinc-900 dark:to-black">
+      {/* HUD */}
+      <div className="sticky top-0 z-10 backdrop-blur bg-white/60 dark:bg-black/30 border-b border-black/5">
+        <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between text-xs">
+          <div className="opacity-70">question {idx+1}/{rows.length}</div>
+          <div className="flex items-center gap-3">
+            <div className="px-2 py-1 rounded bg-black/80 text-white">coins {coins}</div>
+            <div className="px-2 py-1 rounded bg-emerald-600/90 text-white">xp {xp}</div>
+            <div className="px-2 py-1 rounded bg-indigo-600/90 text-white">creds {creds}</div>
           </div>
-        )}
-
-        {answeredIdx !== null && (
-          <div className={"mt-3 text-sm " + (isCorrect ? "text-green-600" : "text-red-600")}>
-            {isCorrect ? "Correct! +10 coins" : "Oops! -5 coins"}
-          </div>
-        )}
-
-        <div className="mt-4 flex gap-2">
-          <button
-            className="rounded bg-black/80 text-white px-3 py-1"
-            onClick={next}
-            disabled={answeredIdx === null}
-          >
-            Next
-          </button>
-          <button
-            className="rounded border px-3 py-1"
-            onClick={() => { setAnsweredIdx(null); setIsCorrect(null); }}
-            disabled={answeredIdx === null}
-          >
-            Change answer
-          </button>
         </div>
       </div>
 
-      <div className="text-[11px] opacity-60">
-        using: public.questions_import2
-        {meta.correctIdx >= 0 ? ` • correct index: ${meta.correctIdx}` : " • no explicit correct index found"}
+      {/* Card */}
+      <div className="max-w-2xl mx-auto px-4 py-10">
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={idx}
+            initial={{ y: 20, opacity: 0, scale: 0.98 }}
+            animate={{ y: 0, opacity: 1, scale: 1 }}
+            exit={{ y: -20, opacity: 0, scale: 0.98 }}
+            transition={{ type: "spring", stiffness: 260, damping: 22 }}
+            className="relative rounded-2xl border border-black/10 shadow-xl bg-white/80 dark:bg-zinc-900/60 p-6 overflow-hidden"
+          >
+            {/* confetti burst */}
+            {picked !== null && (
+              <ConfettiBurst key={burstKey} ok={!!isCorrect} />
+            )}
+
+            <div className="text-lg font-semibold mb-4">
+              {current?.prompt ?? "(no prompt)"}
+            </div>
+
+            <div className="grid gap-2">
+              {options.length === 0 ? (
+                <div className="text-sm opacity-60">No options found in <code>options_raw</code>.</div>
+              ) : options.map((opt, i) => {
+                  const show = picked !== null;
+                  const isPick = picked === i;
+                  const isRight = correctIdx === i;
+
+                  let base = "text-left rounded-xl border px-4 py-3 transition shadow-sm";
+                  if (!show) base += " bg-white/70 hover:bg-black/[0.04] dark:bg-white/5 dark:hover:bg-white/10 cursor-pointer";
+                  else if (isPick && isRight) base += " bg-emerald-50 border-emerald-400 dark:bg-emerald-900/30";
+                  else if (isPick && !isRight) base += " bg-rose-50 border-rose-400 dark:bg-rose-900/30";
+                  else if (isRight) base += " bg-emerald-50/60 border-emerald-300 dark:bg-emerald-900/20";
+                  else base += " bg-white/60 dark:bg-white/5";
+
+                  return (
+                    <motion.button
+                      key={i}
+                      whileTap={!show ? { scale: 0.98 } : {}}
+                      className={base}
+                      disabled={show}
+                      onClick={() => onPick(i)}
+                    >
+                      <div className="flex items-center gap-3">
+                        <span className="inline-flex h-6 w-6 items-center justify-center rounded-full border text-xs">
+                          {String.fromCharCode(65 + i)}
+                        </span>
+                        <span className="text-sm">{opt}</span>
+                      </div>
+                    </motion.button>
+                  );
+              })}
+            </div>
+
+            {/* result + controls */}
+            <AnimatePresence>
+              {picked !== null && (
+                <motion.div
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -8 }}
+                  className="mt-4 flex items-center justify-between"
+                >
+                  <div className={"text-sm " + (isCorrect ? "text-emerald-600" : "text-rose-600")}>
+                    {isCorrect ? `Correct! +${rewardXp} xp, +${rewardCreds} creds` : `Oops! -${Math.max(1, Math.ceil(rewardCreds/2))} coins`}
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      className="rounded-xl border px-3 py-1.5 hover:bg-black/5"
+                      onClick={() => { setPicked(null); setIsCorrect(null); }}
+                    >
+                      Change
+                    </button>
+                    <button
+                      className="rounded-xl bg-black text-white px-3 py-1.5 hover:opacity-90"
+                      onClick={next}
+                    >
+                      Next
+                    </button>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </motion.div>
+        </AnimatePresence>
+
+        <div className="mt-4 text-[11px] opacity-60">source: public.questions_import2 • ignores <code>batch</code></div>
       </div>
     </main>
+  );
+}
+
+/** tiny confetti burst (no libs) */
+function ConfettiBurst({ ok }: { ok: boolean }) {
+  const pieces = Array.from({ length: 14 });
+  return (
+    <div className="pointer-events-none absolute inset-0 overflow-hidden">
+      {pieces.map((_, i) => {
+        const left = 50 + (i - 7) * 5; // spread
+        const delay = i * 0.02;
+        const color = ok ? "bg-emerald-500" : "bg-rose-500";
+        return (
+          <motion.span
+            key={i}
+            initial={{ opacity: 0, y: 0, x: "-50%" }}
+            animate={{ opacity: [0, 1, 0], y: -120 - Math.random()*60 }}
+            transition={{ duration: 0.9 + Math.random()*0.3, delay }}
+            className={"absolute top-10 h-2 w-2 rounded-sm " + color}
+            style={{ left: left + "%" }}
+          />
+        );
+      })}
+    </div>
   );
 }
