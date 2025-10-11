@@ -1,17 +1,8 @@
-'use client';
-import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { SFX } from '@/lib/sfx';
-
 export default function Home() {
-  const r = useRouter();
-
-  useEffect(() => {
-    // start background music (no arg) and go to profile
-    SFX.bg();
-    r.replace('/profile');
-  }, [r]);
-
-  return null;
+  return (
+    <main className="p-6">
+      <h1 className="text-2xl font-bold">Brain Heist</h1>
+      <div className="p-2 text-xs">build: test-deploy</div>
+    </main>
+  );
 }
-<div className="p-2 text-xs">build: test-deploy</div
