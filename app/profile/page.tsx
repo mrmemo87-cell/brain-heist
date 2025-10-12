@@ -45,7 +45,7 @@ export default function ProfilePage() {
       const uid = user?.id;
       if (!uid) { setErr("Not signed in"); return; }
 
-      // Fallback name: auth metadata -> email username -> "You"
+      // Fallback name: auth metadata -> email prefix -> "You"
       const fallback =
         (user?.user_metadata as any)?.name ??
         (user?.user_metadata as any)?.username ??
@@ -53,16 +53,17 @@ export default function ProfilePage() {
         "You";
       setDisplayName(fallback);
 
-      // users row (NO username here)
+      // Read user row (NO username column here)
       const { data: u, error: uerr } = await supabase
         .from("users")
         .select("uid,xp,creds,hack_skill,security_level,streak_days,bio")
         .eq("uid", uid)
         .maybeSingle();
+
       if (uerr) setErr(uerr.message);
       if (u) { setMe(u as any); setBio((u as any).bio ?? ""); }
 
-      // active effects
+      // Active effects
       const { data: fx } = await supabase
         .from("active_effects")
         .select("id,user_id,item_key,effect,started_at,expires_at,duration_seconds")

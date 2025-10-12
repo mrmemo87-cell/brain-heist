@@ -119,3 +119,10 @@ a{ color:inherit }
 .card{ background:var(--c-card); border:1px solid var(--c-border); border-radius:18px; }
 .badge{ background:rgba(2,132,199,.08); border:1px solid rgba(2,132,199,.25); color:#0f172a; }
 .header-glass{ backdrop-filter:saturate(140%) blur(8px); background:rgba(255,255,255,.65); border-bottom:1px solid var(--c-border); }
+/* ===== Light hard-overrides for legacy dark utilities ===== */
+.text-white { color: var(--c-text) !important; }
+.border-white\/10 { border-color: rgba(0,0,0,.10) !important; }
+.bg-white\/10 { background-color: rgba(255,255,255,.60) !important; }
+.text-slate-50,.text-gray-50,.text-zinc-50 { color: var(--c-text) !important; }
+/* ensure base text is dark */
+html,body { color: var(--c-text); }
