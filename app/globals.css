@@ -101,3 +101,21 @@ button{cursor:pointer}
   border:1px solid color-mix(in oklab, var(--c-primary) 25%, transparent);
   box-shadow:0 0 0.5rem color-mix(in oklab, var(--c-primary) 15%, transparent);
 }
+/* === Brain Heist LIGHT THEME OVERRIDE === */
+:root{
+  --c-bg:#f8fafc;            /* slate-50 */
+  --c-card:#ffffff;          /* white */
+  --c-primary:#22d3ee;       /* cyan-400 */
+  --c-text:#0f172a;          /* slate-900 */
+  --c-muted:#475569;         /* slate-600 */
+  --c-border:rgba(15,23,42,.08);
+  --c-ring:rgba(34,211,238,.35);
+}
+html,body{ background: radial-gradient(1200px 600px at 20% -10%, #e0f2fe 0%, transparent 60%),
+                          radial-gradient(1000px 500px at 110% 10%, #fde68a 0%, transparent 55%),
+                          var(--c-bg);
+           color:var(--c-text); }
+a{ color:inherit }
+.card{ background:var(--c-card); border:1px solid var(--c-border); border-radius:18px; }
+.badge{ background:rgba(2,132,199,.08); border:1px solid rgba(2,132,199,.25); color:#0f172a; }
+.header-glass{ backdrop-filter:saturate(140%) blur(8px); background:rgba(255,255,255,.65); border-bottom:1px solid var(--c-border); }

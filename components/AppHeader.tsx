@@ -93,7 +93,7 @@ export default function AppHeader() {
 
   return (
     <header className="sticky top-0 z-40">
-      <div className="backdrop-blur-sm bg-[var(--c-bg)]/70 border-b border-white/10">
+      <div className="backdrop-blur-sm header-glass">
         <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
           <Link href="/" className="font-semibold tracking-wide">🟣 Brain Heist</Link>
           <nav className="hidden md:flex gap-2">
