@@ -1,128 +1,206 @@
 ﻿"use client";
-import { useEffect, useMemo, useState, startTransition } from "react";
+
+import { useEffect, useMemo, useState, startTransition, memo } from "react";
+import { Virtuoso } from "react-virtuoso";
 import { supabase } from "@/lib/supa";
 
-type Q = { prompt?: string; options_raw?: any; answer?: number|string; xp?: number|string; creds?: number|string; active?: any; created_at?: string; [k:string]: any };
+type Task = {
+  created_at: string;
+  prompt?: string;
+  options_raw?: any;
+  answer?: number | string;   // 1-based index (e.g., 2 => option B)
+  xp?: number | string;
+  creds?: number | string;    // coins
+  active?: any;
+  // local view state:
+  _picked?: number | null;
+  _correct?: boolean | null;
+};
 
-const isActive = (v:any)=> v===true || String(v).toLowerCase()==="true" || Number(v)===1;
-const toNum = (v:any)=> { const n=Number(v); return Number.isFinite(n)? n:0; };
+const isActive = (v: any) =>
+  v === true || String(v).toLowerCase() === "true" || Number(v) === 1;
 
-function parseOptions(raw:any): string[] {
+const toNum = (v: any) => {
+  const n = Number(v);
+  return Number.isFinite(n) ? n : 0;
+};
+
+function parseOptions(raw: any): string[] {
   if (Array.isArray(raw)) return raw.map(String);
-  if (typeof raw==="string"){
-    let s=raw.trim();
-    if (s.startsWith("{")&&s.endsWith("}")) { s=s.slice(1,-1); return s.split(",").map(x=>x.trim().replace(/^["']|["']$/g,"")).filter(Boolean); }
-    if (s.startsWith("[")||s.startsWith("{")) { try{ const j=JSON.parse(s); if(Array.isArray(j)) return j.map(String); if (j?.options) return j.options.map(String);}catch{} }
-    if (s.includes("|")) return s.split("|").map(x=>x.trim()).filter(Boolean);
-    if (s.includes(",")) return s.split(",").map(x=>x.trim()).filter(Boolean);
-    return s? [s]:[];
+  if (typeof raw === "string") {
+    let s = raw.trim();
+    // {A,B,C,D}
+    if (s.startsWith("{") && s.endsWith("}")) {
+      s = s.slice(1, -1);
+      return s.split(",").map((x) => x.trim().replace(/^["']|["']$/g, "")).filter(Boolean);
+    }
+    // JSON-ish
+    if (s.startsWith("[") || s.startsWith("{")) {
+      try {
+        const j = JSON.parse(s);
+        if (Array.isArray(j)) return j.map(String);
+        if (j?.options) return j.options.map(String);
+      } catch {}
+    }
+    // fallback separators
+    if (s.includes("|")) return s.split("|").map((x) => x.trim()).filter(Boolean);
+    if (s.includes(",")) return s.split(",").map((x) => x.trim()).filter(Boolean);
+    return s ? [s] : [];
   }
   return [];
 }
 
-export default function TasksClient(){
-  const [rows,setRows]=useState<Q[]>([]);
-  const [i,setI]=useState(0);
-  const [loading,setLoading]=useState(true);
-  const [err,setErr]=useState<string|null>(null);
-  const [picked,setPicked]=useState<number|null>(null);
-  const [correct,setCorrect]=useState<boolean|null>(null);
+function correctIdx(answer: number | string | undefined, total: number): number {
+  const n = toNum(answer);
+  if (!n) return -1;
+  const z = Math.max(0, Math.floor(n) - 1);
+  return z < total ? z : -1;
+}
 
-  useEffect(()=>{(async()=>{
-    const { data, error } = await supabase
-      .from("questions_import2")
-      .select("prompt,options_raw,answer,xp,creds,active,created_at")
-      .order("created_at", { ascending: false })
-      .limit(200);
-    if (error){ setErr(error.message); setLoading(false); return; }
-    setRows((data ?? []).filter(r => isActive((r as Q).active)) as Q[]);
-    setLoading(false);
-  })()},[]);
+// bump header immediately + persist in background
+function bumpAndPersist(xpDelta: number, credsDelta: number) {
+  try {
+    // AppHeader listens for this and animates counts
+    window.dispatchEvent(new CustomEvent("stats:delta", { detail: { xpDelta, credsDelta } }));
+  } catch {}
+  // atomic server-side increment; don’t await (keep UI snappy)
+  void supabase.rpc("rpc_inc_user_stats", { dxp: xpDelta, dcreds: credsDelta });
+}
 
-  const q = rows[i] ?? null;
-  const opts = useMemo(()=>parseOptions(q?.options_raw),[q]);
-  const correctIdx = useMemo(()=>{ const n=toNum(q?.answer); if(!n) return -1; const z=Math.max(0,Math.floor(n)-1); return z<opts.length? z:-1; },[q,opts]);
+export default function TasksClient({ initialTasks = [] as Task[] }) {
+  const [tasks, setTasks] = useState<Task[]>(initialTasks);
+  const [loading, setLoading] = useState(true);
+  const [err, setErr] = useState<string | null>(null);
 
-  function submit(choice:number){
-    if (picked!==null || !q) return;
-
-    const gainXp = toNum(q.xp), gainCreds = toNum(q.creds);
-    const ok = choice===correctIdx;
-    const xpDelta = ok ? gainXp : 0;
-    const credsDelta = ok ? gainCreds : -Math.max(1, Math.ceil(gainCreds/2));
-
-    startTransition(()=>{ setPicked(choice); setCorrect(ok); });
-
-    // fire-and-forget: update user stats so AppHeader realtime picks it up
-    (async ()=>{
-      try {
-        // prefer your RPC if it exists
-        await supabase.rpc("rpc_task_submit_frontend", { xp_delta: xpDelta, creds_delta: credsDelta });
-      } catch {
-        try {
-          // fallback: read→update public.users (uid key) atomically enough for our use
-          const { data: { user } } = await supabase.auth.getUser();
-          if (!user) return;
-          const { data } = await supabase.from("users").select("xp,creds").eq("uid", user.id).maybeSingle();
-          const curXp = Number((data as any)?.xp ?? 0);
-          const curCreds = Number((data as any)?.creds ?? 0);
-          await supabase.from("users").update({ xp: curXp + xpDelta, creds: curCreds + credsDelta }).eq("uid", user.id);
-        } catch {}
+  // load latest questions (active only)
+  useEffect(() => {
+    (async () => {
+      setErr(null); setLoading(true);
+      const { data, error } = await supabase
+        .from("questions_import2")
+        .select("prompt,options_raw,answer,xp,creds,active,created_at")
+        .order("created_at", { ascending: false })
+        .limit(200);
+      if (error) {
+        setErr(error.message);
+        setLoading(false);
+        return;
       }
-
-      // also persist the chosen answer (no FK assumptions)
-      try {
-        const { data: { user } } = await supabase.auth.getUser();
-        const answerText = opts[choice] ?? String(choice);
-        await supabase.from("answers").insert({ question_id: null, user_id: user?.id ?? null, answer: answerText });
-      } catch {}
+      const rows = (data ?? []).filter((r: any) => isActive(r.active)) as Task[];
+      setTasks(rows);
+      setLoading(false);
     })();
-  }
+  }, []);
 
-  function next(){ startTransition(()=>{ setPicked(null); setCorrect(null); setI(x=>Math.min(x+1, rows.length)); }); }
+  // submit handler used by TaskRow
+  async function handleAnswer(idx: number, choice: number, opts: string[], t: Task) {
+    // already answered?
+    if (tasks[idx]?._picked !== undefined && tasks[idx]?._picked !== null) return;
+
+    const gainXp = toNum(t.xp);
+    const gainCreds = toNum(t.creds);
+    const right = choice === correctIdx(t.answer, opts.length);
+    const xpDelta = right ? gainXp : 0;
+    const credsDelta = right ? gainCreds : -Math.max(1, Math.ceil(gainCreds / 2));
+
+    // 1) update local state fast
+    startTransition(() => {
+      setTasks((prev) => {
+        const next = [...prev];
+        next[idx] = { ...t, _picked: choice, _correct: right };
+        return next;
+      });
+    });
+
+    // 2) instant header bump + background DB persist
+    bumpAndPersist(xpDelta, credsDelta);
+
+    // 3) optional: store answer (no FK assumptions)
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      const answerText = opts[choice] ?? String(choice);
+      await supabase.from("answers").insert({
+        user_id: user?.id ?? null,
+        answer: answerText,
+      });
+    } catch {}
+  }
 
   if (loading) return <main className="min-h-[60vh] grid place-items-center text-sm opacity-70">Loading…</main>;
   if (err) return <main className="p-6 text-red-500">Error: {err}</main>;
-  if (!q) return <main className="p-8 grid place-items-center"><div className="text-center"><div className="text-2xl font-bold mb-2">All done 🎉</div><button className="rounded-xl bg-black text-white px-4 py-2" onClick={()=>setI(0)}>Restart</button></div></main>;
 
   return (
-    <main className="min-h-[100vh]">
-      <div className="max-w-2xl mx-auto px-4 py-10">
-        <div className="rounded-2xl border shadow-xl bg-white dark:bg-zinc-900/70 p-6">
-          <div className="text-lg font-semibold mb-4 text-neutral-900 dark:text-neutral-100">{q.prompt ?? "(no prompt)"}</div>
-          <div className="grid gap-2">
-            {opts.map((opt, idx)=>{
-              const show=picked!==null, isPick=picked===idx, isRight=correctIdx===idx;
-              let base="text-left rounded-xl border px-4 py-3 transition shadow-sm select-none text-neutral-900 dark:text-neutral-100";
-              if (!show) base+=" bg-white hover:bg-black/[0.04] dark:bg-white/10 dark:hover:bg-white/20 cursor-pointer";
-              else if (isPick && isRight) base+=" bg-emerald-50 border-emerald-400 dark:bg-emerald-900/30";
-              else if (isPick && !isRight) base+=" bg-rose-50 border-rose-400 dark:bg-rose-900/30";
-              else if (isRight) base+=" bg-emerald-50/60 border-emerald-300 dark:bg-emerald-900/20";
-              else base+=" bg-white dark:bg-white/10";
-              return (
-                <button key={idx} className={base} disabled={show} onClick={()=>submit(idx)}>
-                  <div className="flex items-center gap-3">
-                    <span className="inline-flex h-6 w-6 items-center justify-center rounded-full border text-xs text-neutral-700 dark:text-neutral-200">
-                      {String.fromCharCode(65+idx)}
-                    </span>
-                    <span className="text-sm">{opt}</span>
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-          {picked!==null && (
-            <div className={"mt-4 text-sm " + (correct ? "text-emerald-600" : "text-rose-600")}>
-              {correct ? `Correct! +${toNum(q.xp)} xp, +${toNum(q.creds)} creds` : `Oops! -${Math.max(1, Math.ceil(toNum(q.creds)/2))} creds`}
-            </div>
-          )}
-          <div className="mt-4 flex gap-2">
-            <button className="rounded-xl border px-3 py-1.5" onClick={()=>{ setPicked(null); setCorrect(null); }} disabled={picked===null}>Change</button>
-            <button className="rounded-xl bg-black text-white px-3 py-1.5" onClick={next} disabled={picked===null}>Next</button>
-          </div>
-        </div>
-        <div className="mt-4 text-[11px] opacity-60">source: public.questions_import2 • batch ignored</div>
-      </div>
+    <main className="p-6">
+      <Virtuoso
+        style={{ height: "calc(100vh - 140px)" }}
+        data={tasks}
+        itemContent={(index, t) => <TaskRow task={t} index={index} onAnswer={handleAnswer} />}
+      />
     </main>
   );
 }
+
+// ---- row (memoized to avoid re-render storms) ----
+const TaskRow = memo(function TaskRow({
+  task,
+  index,
+  onAnswer,
+}: {
+  task: Task;
+  index: number;
+  onAnswer: (idx: number, choice: number, opts: string[], t: Task) => void;
+}) {
+  const opts = useMemo(() => parseOptions(task.options_raw), [task.options_raw]);
+  const cIdx = useMemo(() => correctIdx(task.answer, opts.length), [task.answer, opts.length]);
+  const picked = task._picked ?? null;
+  const right = task._correct ?? null;
+
+  return (
+    <div className="rounded-2xl border p-4 bg-white dark:bg-zinc-900/70">
+      <div className="text-[11px] opacity-60 mb-2">
+        {new Date(task.created_at).toLocaleString()}
+      </div>
+      <div className="text-base font-semibold mb-3 text-neutral-900 dark:text-neutral-100">
+        {task.prompt ?? "(no prompt)"}
+      </div>
+
+      <div className="grid gap-2">
+        {opts.map((opt, i) => {
+          const show = picked !== null;
+          const isPick = picked === i;
+          const isRight = cIdx === i;
+          let cls = "text-left rounded-xl border px-4 py-3 transition shadow-sm select-none text-neutral-900 dark:text-neutral-100";
+          if (!show) cls += " bg-white hover:bg-black/[0.04] dark:bg-white/10 dark:hover:bg-white/20 cursor-pointer";
+          else if (isPick && isRight) cls += " bg-emerald-50 border-emerald-400 dark:bg-emerald-900/30";
+          else if (isPick && !isRight) cls += " bg-rose-50 border-rose-400 dark:bg-rose-900/30";
+          else if (isRight) cls += " bg-emerald-50/60 border-emerald-300 dark:bg-emerald-900/20";
+          else cls += " bg-white dark:bg-white/10";
+
+          return (
+            <button
+              key={i}
+              className={cls}
+              disabled={show}
+              onClick={() => onAnswer(index, i, opts, task)}
+            >
+              <div className="flex items-center gap-3">
+                <span className="inline-flex h-6 w-6 items-center justify-center rounded-full border text-xs text-neutral-700 dark:text-neutral-200">
+                  {String.fromCharCode(65 + i)}
+                </span>
+                <span className="text-sm">{opt}</span>
+              </div>
+            </button>
+          );
+        })}
+      </div>
+
+      {picked !== null && (
+        <div className={"mt-3 text-sm " + (right ? "text-emerald-600" : "text-rose-600")}>
+          {right
+            ? `Correct! +${toNum(task.xp)} xp, +${toNum(task.creds)} creds`
+            : `Oops! -${Math.max(1, Math.ceil(toNum(task.creds) / 2))} creds`}
+        </div>
+      )}
+    </div>
+  );
+});
