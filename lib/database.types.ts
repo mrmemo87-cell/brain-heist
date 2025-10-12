@@ -156,7 +156,7 @@ export type Database = {
           defender_coins_lost: number
           defender_security_level: number
           id: number
-          outcome: Database["public"]["Enums"]["hack_outcome"]
+          outcome: ("win" | "lose" | "fail" | null)
           win_prob: number
           xp_awarded: number
         }
@@ -169,7 +169,7 @@ export type Database = {
           defender_coins_lost?: number
           defender_security_level?: number
           id?: number
-          outcome: Database["public"]["Enums"]["hack_outcome"]
+          outcome: ("win" | "lose" | "fail" | null)
           win_prob?: number
           xp_awarded?: number
         }
@@ -182,7 +182,7 @@ export type Database = {
           defender_coins_lost?: number
           defender_security_level?: number
           id?: number
-          outcome?: Database["public"]["Enums"]["hack_outcome"]
+          outcome?: ("win" | "lose" | "fail" | null)
           win_prob?: number
           xp_awarded?: number
         }
@@ -982,4 +982,5 @@ export const Constants = {
     },
   },
 } as const
+
 
