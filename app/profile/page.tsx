@@ -4,15 +4,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supa";
 import { ProgressBar } from "@/components/ProgressBar";
 
-type UserRow = {
-  uid: string;
-  xp?: number | null;
-  creds?: number | null;
-  hack_skill?: number | null;
-  security_level?: number | null;
-  streak_days?: number | null;
-  bio?: string | null;
-};
+type UserRow = Record<string, any>;
 
 type EffectRow = {
   id: number;
@@ -28,6 +20,17 @@ const secsLeft = (e: EffectRow) => {
   const end = e.expires_at ? new Date(e.expires_at).getTime() : 0;
   return Math.max(0, Math.floor((end - Date.now()) / 1000));
 };
+
+// pick first present numeric field
+function pickNum(obj: any, keys: string[], fallback = 0) {
+  for (const k of keys) {
+    if (obj && obj[k] !== undefined && obj[k] !== null) {
+      const n = Number(obj[k]);
+      if (!Number.isNaN(n)) return n;
+    }
+  }
+  return fallback;
+}
 
 export default function ProfilePage() {
   const [me, setMe] = useState<UserRow | null>(null);
@@ -45,7 +48,6 @@ export default function ProfilePage() {
       const uid = user?.id;
       if (!uid) { setErr("Not signed in"); return; }
 
-      // Fallback name: auth metadata -> email prefix -> "You"
       const fallback =
         (user?.user_metadata as any)?.name ??
         (user?.user_metadata as any)?.username ??
@@ -53,17 +55,15 @@ export default function ProfilePage() {
         "You";
       setDisplayName(fallback);
 
-      // Read user row (NO username column here)
+      // ✅ request ALL columns to avoid “column does not exist” errors
       const { data: u, error: uerr } = await supabase
         .from("users")
-        .select("uid,xp,creds,hack_skill,security_level,streak_days,bio")
+        .select("*")
         .eq("uid", uid)
         .maybeSingle();
-
       if (uerr) setErr(uerr.message);
       if (u) { setMe(u as any); setBio((u as any).bio ?? ""); }
 
-      // Active effects
       const { data: fx } = await supabase
         .from("active_effects")
         .select("id,user_id,item_key,effect,started_at,expires_at,duration_seconds")
@@ -83,15 +83,17 @@ export default function ProfilePage() {
     finally { setSaving(false); }
   }
 
-  const hack = Math.max(0, Math.min(100, Number(me?.hack_skill ?? 0)));
-  const sec  = Math.max(0, Math.min(100, Number(me?.security_level ?? 0)));
-  const streak = Math.max(0, Math.min(30, Number(me?.streak_days ?? 0)));
+  // Safely derive numbers from whatever fields exist
+  const xp    = pickNum(me, ["xp"]);
+  const creds = pickNum(me, ["creds","coins"]);
+  const hack  = pickNum(me, ["hack_skill","hack","skill","hacklevel","hack_level"], 0);
+  const sec   = pickNum(me, ["security_level","security","defense","shield_level"], 0);
+  const streak= pickNum(me, ["streak_days","streak","streakdays"], 0);
 
   return (
     <main className="max-w-6xl mx-auto px-4 py-8 space-y-8">
       {err && <div className="text-sm rounded-xl bg-rose-50 border border-rose-200 text-rose-700 p-3">{err}</div>}
 
-      {/* Top card */}
       <section className="card rounded-3xl p-6 shadow-[0_10px_40px_rgba(2,132,199,.15)]">
         <div className="flex items-center justify-between">
           <div>
@@ -99,32 +101,30 @@ export default function ProfilePage() {
             <div className="text-xs text-[var(--c-muted)] mt-1">Rank 0 • Squad: A</div>
           </div>
           <div className="flex gap-2">
-            <span className="px-3 py-1 rounded-xl bg-cyan-50 border border-cyan-200 text-cyan-700 text-sm">✨ {me?.xp ?? 0}</span>
-            <span className="px-3 py-1 rounded-xl bg-amber-50 border border-amber-200 text-amber-700 text-sm">🪙 {me?.creds ?? 0}</span>
+            <span className="px-3 py-1 rounded-xl bg-cyan-50 border border-cyan-200 text-cyan-700 text-sm">✨ {xp}</span>
+            <span className="px-3 py-1 rounded-xl bg-amber-50 border border-amber-200 text-amber-700 text-sm">🪙 {creds}</span>
           </div>
         </div>
       </section>
 
-      {/* Powers */}
       <section className="grid md:grid-cols-3 gap-4">
         <div className="card p-4">
           <div className="text-sm mb-1">Hack skill</div>
-          <ProgressBar value={hack/100} className="mt-2" />
+          <ProgressBar value={Math.min(1, Math.max(0, hack/100))} className="mt-2" />
           <div className="text-[11px] text-[var(--c-muted)] mt-1">{hack}/100</div>
         </div>
         <div className="card p-4">
           <div className="text-sm mb-1">Security level</div>
-          <ProgressBar value={sec/100} className="mt-2" />
+          <ProgressBar value={Math.min(1, Math.max(0, sec/100))} className="mt-2" />
           <div className="text-[11px] text-[var(--c-muted)] mt-1">{sec}/100</div>
         </div>
         <div className="card p-4">
           <div className="text-sm mb-1">Streak (days)</div>
-          <ProgressBar value={streak/30} className="mt-2" />
+          <ProgressBar value={Math.min(1, Math.max(0, streak/30))} className="mt-2" />
           <div className="text-[11px] text-[var(--c-muted)] mt-1">{streak}/30</div>
         </div>
       </section>
 
-      {/* Active Effects */}
       <section className="card p-4">
         <div className="text-lg font-semibold mb-3">Active Effects</div>
         {effects.length === 0 ? (
@@ -134,7 +134,7 @@ export default function ProfilePage() {
             {effects.map((e) => {
               const left = secsLeft(e as any);
               const total = Math.max(1, (e as any).duration_seconds);
-              const ratio = left / total; // reverse fill
+              const ratio = left / total;
               const m = Math.floor(left/60), s = left%60;
               return (
                 <li key={(e as any).id} className="p-3 rounded-xl border border-[var(--c-border)] bg-white">
@@ -151,7 +151,6 @@ export default function ProfilePage() {
         )}
       </section>
 
-      {/* Bio */}
       <section className="card p-4">
         <div className="text-lg font-semibold mb-2">Bio</div>
         <p className="text-xs text-[var(--c-muted)] mb-2">Drop a scary one-liner to keep hackers away 😈</p>
@@ -165,7 +164,14 @@ export default function ProfilePage() {
         <div className="mt-2">
           <button
             disabled={saving || bio === (me?.bio ?? "")}
-            onClick={saveBio}
+            onClick={async()=>{
+              if (!me) return;
+              setSaving(true);
+              try {
+                const { error } = await supabase.from("users").update({ bio }).eq("uid", me.uid);
+                if (error) throw error;
+              } finally { setSaving(false); }
+            }}
             className="px-4 py-2 rounded-xl bg-gradient-to-r from-cyan-400 to-fuchsia-400 text-black font-semibold hover:opacity-90 disabled:opacity-50"
           >
             {saving ? "Saving…" : "Save Bio"}
