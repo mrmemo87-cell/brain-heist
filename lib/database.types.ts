@@ -44,6 +44,30 @@ export type Database = {
         }
         Relationships: []
       }
+      answers: {
+        Row: {
+          answer: string
+          created_at: string
+          id: string
+          question_id: number | null
+          user_id: string
+        }
+        Insert: {
+          answer: string
+          created_at?: string
+          id?: string
+          question_id?: number | null
+          user_id: string
+        }
+        Update: {
+          answer?: string
+          created_at?: string
+          id?: string
+          question_id?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       attempts: {
         Row: {
           correct: boolean | null
@@ -156,7 +180,7 @@ export type Database = {
           defender_coins_lost: number
           defender_security_level: number
           id: number
-          outcome: ("win" | "lose" | "fail" | null)
+          outcome: Database["public"]["Enums"]["hack_outcome"]
           win_prob: number
           xp_awarded: number
         }
@@ -169,7 +193,7 @@ export type Database = {
           defender_coins_lost?: number
           defender_security_level?: number
           id?: number
-          outcome: ("win" | "lose" | "fail" | null)
+          outcome: Database["public"]["Enums"]["hack_outcome"]
           win_prob?: number
           xp_awarded?: number
         }
@@ -182,7 +206,7 @@ export type Database = {
           defender_coins_lost?: number
           defender_security_level?: number
           id?: number
-          outcome?: ("win" | "lose" | "fail" | null)
+          outcome?: Database["public"]["Enums"]["hack_outcome"]
           win_prob?: number
           xp_awarded?: number
         }
@@ -510,6 +534,7 @@ export type Database = {
           rank: number | null
           sec_level: number | null
           session_ends_at: string | null
+          session_started_at: string | null
           session_used_on: string | null
           soft_shield_until: string | null
           streak: number | null
@@ -526,6 +551,7 @@ export type Database = {
           rank?: number | null
           sec_level?: number | null
           session_ends_at?: string | null
+          session_started_at?: string | null
           session_used_on?: string | null
           soft_shield_until?: string | null
           streak?: number | null
@@ -542,6 +568,7 @@ export type Database = {
           rank?: number | null
           sec_level?: number | null
           session_ends_at?: string | null
+          session_started_at?: string | null
           session_used_on?: string | null
           soft_shield_until?: string | null
           streak?: number | null
@@ -744,6 +771,13 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: Json
       }
+      rpc_inc_user_stats: {
+        Args: { dcreds: number; dxp: number }
+        Returns: {
+          creds: number
+          xp: number
+        }[]
+      }
       rpc_inventory_activate: {
         Args: { p_inventory_id: string }
         Returns: Json
@@ -813,6 +847,7 @@ export type Database = {
         Args: { p_emoji: string; p_event_ts: string }
         Returns: Json
       }
+      rpc_session_start: {
         Args: Record<PropertyKey, never>
         Returns: Json
       }
@@ -982,5 +1017,3 @@ export const Constants = {
     },
   },
 } as const
-
-
