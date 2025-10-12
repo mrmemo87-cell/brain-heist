@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 const cache = new Map<string, HTMLAudioElement>();
 
@@ -79,3 +79,4 @@ export const SFX = {
   stopBg() { stopBg(); },
   isBgPlaying() { return isBgPlaying(); },
 };
+

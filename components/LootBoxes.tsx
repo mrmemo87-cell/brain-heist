@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useEffect, useMemo, useState } from 'react';
 import { supabase } from '@/lib/supa';
@@ -72,7 +72,7 @@ export default function LootBoxes({ onOpened }: { onOpened?: () => void | Promis
       {err && <div className="text-xs rounded-xl bg-rose-500/15 border border-rose-500/40 p-2 mb-2">{err}</div>}
 
       {loading ? (
-        <div className="opacity-70 text-sm">Loading…</div>
+        <div className="opacity-70 text-sm">LoadingвЂ¦</div>
       ) : rows.length === 0 ? (
         <div className="opacity-70 text-sm">No loot right now. Try the shop or tasks to earn some.</div>
       ) : (
@@ -88,7 +88,7 @@ export default function LootBoxes({ onOpened }: { onOpened?: () => void | Promis
                 onClick={() => void openBox(r.id)}
                 className="px-3 py-2 rounded-xl text-sm bg-[var(--c-primary)]/80 hover:opacity-90 disabled:opacity-50"
               >
-                {opening === r.id ? 'Opening…' : 'Open'}
+                {opening === r.id ? 'OpeningвЂ¦' : 'Open'}
               </button>
             </li>
           ))}
@@ -97,3 +97,4 @@ export default function LootBoxes({ onOpened }: { onOpened?: () => void | Promis
     </section>
   );
 }
+

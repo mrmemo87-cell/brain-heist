@@ -1,4 +1,4 @@
-// super-light inline icons (no deps)
+﻿// super-light inline icons (no deps)
 import React from 'react';
 
 type P = React.SVGProps<SVGSVGElement> & { size?: number };
@@ -53,3 +53,4 @@ export const UserIcon = ({ size, ...p }: P) => (
     <path d="M5 20a7 7 0 0 1 14 0" stroke="currentColor" />
   </svg>
 );
+

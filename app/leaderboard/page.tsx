@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useEffect, useMemo, useState } from 'react';
 import { supabase } from '@/lib/supa';
@@ -58,7 +58,7 @@ export default function LeaderboardPage() {
         <div className="lg:col-span-2 rounded-2xl p-4 bg-[var(--c-surface)]/80">
           {err && <div className="text-sm rounded-xl bg-rose-500/15 border border-rose-500/40 p-3">{err}</div>}
           {loading ? (
-            <div className="opacity-70 text-sm">Loading leaderboard…</div>
+            <div className="opacity-70 text-sm">Loading leaderboardвЂ¦</div>
           ) : rows.length === 0 ? (
             <div className="opacity-70 text-sm">No players yet.</div>
           ) : (
@@ -81,7 +81,7 @@ export default function LeaderboardPage() {
                     <td>{r.rank ?? 0}</td>
                     <td>{r.xp ?? 0}</td>
                     <td>{r.creds ?? 0}</td>
-                    <td>{r.last_online_mins != null ? `${r.last_online_mins}m ago` : '—'}</td>
+                    <td>{r.last_online_mins != null ? `${r.last_online_mins}m ago` : 'вЂ”'}</td>
                   </tr>
                 ))}
               </tbody>
@@ -97,3 +97,4 @@ export default function LeaderboardPage() {
     </main>
   );
 }
+

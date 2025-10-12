@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supa';
@@ -27,3 +27,4 @@ export default function WhoAmI() {
     </pre>
   );
 }
+

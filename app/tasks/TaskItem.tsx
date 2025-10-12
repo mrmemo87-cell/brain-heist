@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 import React, { memo } from "react";
 
 type Task = {
@@ -21,7 +21,7 @@ function TaskItem({ task, onAnswer }: { task: Task; onAnswer: (id: string, answe
           className="rounded bg-black/80 px-3 py-1 text-white"
           onClick={() => onAnswer(task.id, "42")}
         >
-          Answer “42”
+          Answer вЂњ42вЂќ
         </button>
         {task.status && <span className="text-xs opacity-70">status: {task.status}</span>}
       </div>

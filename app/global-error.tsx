@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 export default function GlobalError({ reset }: { reset: () => void }) {
   return (
     <html><body>
@@ -11,3 +11,4 @@ export default function GlobalError({ reset }: { reset: () => void }) {
     </body></html>
   );
 }
+

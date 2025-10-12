@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 export default function ProgressBar({ value, max, label }:{ value:number; max:number; label?:string }) {
   const pct = Math.max(0, Math.min(100, Math.round((value / Math.max(1,max)) * 100)));
   return (
@@ -12,3 +12,4 @@ export default function ProgressBar({ value, max, label }:{ value:number; max:nu
     </div>
   );
 }
+

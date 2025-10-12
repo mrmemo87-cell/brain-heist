@@ -1,4 +1,4 @@
-import { supabase } from '@/lib/supa';
+﻿import { supabase } from '@/lib/supa';
 
 export type HackOutcome = 'win' | 'lose' | 'fail';
 export type HackAttemptResult = {
@@ -14,7 +14,7 @@ export async function hackAttempt(defenderUid: string): Promise<HackAttemptResul
   const { data, error } = await supabase.rpc('rpc_hack_attempt', { _def: defenderUid });
   if (error) throw new Error(error.message);
 
-  // Supabase RPCs sometimes return [row] or row — normalize it
+  // Supabase RPCs sometimes return [row] or row вЂ” normalize it
   const row: any = Array.isArray(data) ? data[0] : data;
 
   const fallback: HackAttemptResult = {
@@ -35,3 +35,4 @@ export async function hackAttempt(defenderUid: string): Promise<HackAttemptResul
     win_prob: Number(row.win_prob ?? 0),
   };
 }
+

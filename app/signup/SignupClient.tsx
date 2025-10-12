@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { supabase } from '@/lib/supabaseClient';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -36,7 +36,7 @@ export default function SignupClient() {
       return;
     }
 
-    // Try to register profile; if you’re assigning batches later, this can fail silently
+    // Try to register profile; if youвЂ™re assigning batches later, this can fail silently
     try {
       await supabase.rpc('rpc_register', {
         _batch: batch,
@@ -45,7 +45,7 @@ export default function SignupClient() {
       });
       setInfo('Account created. Profile initialized.');
     } catch (e: any) {
-      // Don’t block signup if rpc_register isn’t ready
+      // DonвЂ™t block signup if rpc_register isnвЂ™t ready
       setInfo('Account created. Profile setup will be completed later.');
     }
 
@@ -56,7 +56,7 @@ export default function SignupClient() {
   const signInWithGoogle = async () => {
     setErr(null);
     setInfo(null);
-    // After Google returns, we’ll land on /tasks; you can complete profile there if needed
+    // After Google returns, weвЂ™ll land on /tasks; you can complete profile there if needed
     const redirectTo = `${window.location.origin}/tasks`;
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
@@ -108,7 +108,7 @@ export default function SignupClient() {
         {info && <p className="text-emerald-400 text-sm">{info}</p>}
 
         <button disabled={loading} className="px-4 py-2 bg-emerald-600 rounded">
-          {loading ? 'Creating…' : 'Sign up'}
+          {loading ? 'CreatingвЂ¦' : 'Sign up'}
         </button>
       </form>
 
@@ -124,3 +124,4 @@ export default function SignupClient() {
     </div>
   );
 }
+

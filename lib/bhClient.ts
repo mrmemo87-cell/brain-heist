@@ -1,4 +1,4 @@
-// lib/bhClient.ts
+﻿// lib/bhClient.ts
 import { createClient } from "@supabase/supabase-js";
 
 export type BHClient = ReturnType<typeof makeBHClient>;
@@ -43,3 +43,4 @@ export function makeBHClient(supabaseUrl: string, supabaseAnonKey: string, optio
 
   return { sb, rpc, unwrap };
 }
+

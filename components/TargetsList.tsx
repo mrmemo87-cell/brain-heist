@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useEffect, useMemo, useState } from 'react';
 import { supabase } from '@/lib/supa';
@@ -20,7 +20,7 @@ function toArray<T = any>(data: any): T[] {
   return [];
 }
 function timeAgo(iso?: string | null): string {
-  if (!iso) return '—';
+  if (!iso) return 'вЂ”';
   const d = new Date(iso).getTime();
   const now = Date.now();
   let s = Math.max(0, Math.round((now - d) / 1000));
@@ -101,7 +101,7 @@ export default function TargetsList() {
   if (needLogin) {
     return (
       <div className="rounded-2xl p-4 bg-[var(--c-card)]/70 text-sm">
-        You’re not signed in. <a href="/login" className="underline">Log in</a> to see targets in your batch.
+        YouвЂ™re not signed in. <a href="/login" className="underline">Log in</a> to see targets in your batch.
       </div>
     );
   }
@@ -118,13 +118,13 @@ export default function TargetsList() {
             onClick={() => void setMyBatch('8A')}
             className="px-3 py-2 rounded-xl bg-[var(--c-primary)]/80 hover:opacity-90 disabled:opacity-50 text-sm"
           >
-            {settingBatch ? 'Setting…' : 'Set my batch to 8A'}
+            {settingBatch ? 'SettingвЂ¦' : 'Set my batch to 8A'}
           </button>
         </div>
       )}
 
       {loading ? (
-        <div className="opacity-70 text-sm">Loading targets…</div>
+        <div className="opacity-70 text-sm">Loading targetsвЂ¦</div>
       ) : targets.length === 0 ? (
         <div className="opacity-70 text-sm">No targets in your batch yet.</div>
       ) : (
@@ -137,7 +137,7 @@ export default function TargetsList() {
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={t.avatar_url} alt="" className="w-full h-full object-cover" />
                   ) : (
-                    <span className="text-xs opacity-80">👤</span>
+                    <span className="text-xs opacity-80">рџ‘¤</span>
                   )}
                 </div>
                 <div>
@@ -155,3 +155,4 @@ export default function TargetsList() {
     </div>
   );
 }
+

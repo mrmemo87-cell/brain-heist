@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React from 'react';
 import HackButton from '@/components/HackButton';
@@ -28,13 +28,13 @@ export default function PlayerPeek({
             // eslint-disable-next-line @next/next/no-img-element
             <img src={avatar_url} alt="" className="w-full h-full object-cover" />
           ) : (
-            <span className="text-sm">👤</span>
+            <span className="text-sm">рџ‘¤</span>
           )}
         </div>
         <div>
           <div className="text-sm font-medium">{username ?? uid.slice(0, 6)}</div>
           <div className="text-[11px] opacity-70">
-            Batch {batch ?? '—'} · Rank {rank ?? 0} · ✨ {xp ?? 0} · 💰 {creds ?? 0}
+            Batch {batch ?? 'вЂ”'} В· Rank {rank ?? 0} В· вњЁ {xp ?? 0} В· рџ’° {creds ?? 0}
           </div>
         </div>
       </div>
@@ -42,3 +42,4 @@ export default function PlayerPeek({
     </div>
   );
 }
+

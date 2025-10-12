@@ -1,11 +1,11 @@
-'use client';
+﻿'use client';
 
 import React, { useEffect, useMemo, useState } from 'react';
 import { supabase } from '@/lib/supa';
 
 type Counts = Record<string, number>;
 
-const EMOJIS = ['🔥', '😈', '🛡️', '😭'] as const;
+const EMOJIS = ['рџ”Ґ', 'рџ€', 'рџ›ЎпёЏ', 'рџ­'] as const;
 type Emoji = typeof EMOJIS[number];
 
 export default function ReactionBar({
@@ -76,3 +76,4 @@ export default function ReactionBar({
     </div>
   );
 }
+

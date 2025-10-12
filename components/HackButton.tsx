@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState } from 'react';
 import { supabase } from '@/lib/supa';
@@ -47,7 +47,8 @@ export default function HackButton({ defenderUid, defenderId, className = '', on
       disabled={!def || loading}
       className={`px-3 py-2 rounded-xl bg-[var(--c-primary)]/80 hover:opacity-90 disabled:opacity-50 ${className}`}
     >
-      {loading ? 'Hacking…' : 'Hack'}
+      {loading ? 'HackingвЂ¦' : 'Hack'}
     </button>
   );
 }
+

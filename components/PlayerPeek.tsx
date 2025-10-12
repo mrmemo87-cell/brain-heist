@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
@@ -64,7 +64,7 @@ export default function PlayerPeek({
           className="absolute top-3 right-3 text-ink-300 hover:text-white"
           aria-label="Close"
         >
-          ✕
+          вњ•
         </button>
 
         <div className="flex items-center gap-4 mb-4">
@@ -75,13 +75,13 @@ export default function PlayerPeek({
           <div>
             <div className="text-xl font-bold">{row.username}</div>
             <div className="text-xs text-ink-400">
-              Batch <b>{row.batch ?? '-'}</b> • Rank:{' '}
+              Batch <b>{row.batch ?? '-'}</b> вЂў Rank:{' '}
               <span className="px-2 py-0.5 rounded-md bg-amber-500/15 text-amber-300 ring-1 ring-amber-400/30">
                 {rankName(row.xp_total)}
               </span>
             </div>
             <div className="text-xs text-ink-400">
-              XP: <b className="text-violet-300">{row.xp_total ?? 0}</b> • Level:{' '}
+              XP: <b className="text-violet-300">{row.xp_total ?? 0}</b> вЂў Level:{' '}
               <b className="text-cyan-300">{row.level ?? '-'}</b>
             </div>
           </div>
@@ -105,3 +105,4 @@ export default function PlayerPeek({
     </div>
   );
 }
+

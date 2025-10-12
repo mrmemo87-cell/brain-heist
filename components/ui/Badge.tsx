@@ -1,4 +1,4 @@
-import clsx from 'clsx';
+﻿import clsx from 'clsx';
 
 export default function Badge({ children, className }: {children: React.ReactNode; className?: string}) {
   return (
@@ -7,3 +7,4 @@ export default function Badge({ children, className }: {children: React.ReactNod
     </span>
   );
 }
+

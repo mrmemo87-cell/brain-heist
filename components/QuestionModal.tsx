@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useEffect, useMemo, useState } from 'react';
 import { supabase } from '@/lib/supa';
@@ -96,7 +96,7 @@ export default function QuestionModal({ open = true, question, userTaskId, onClo
         {err && <div className="text-xs rounded-xl bg-rose-500/15 border border-rose-500/40 p-2 mb-2">{err}</div>}
 
         {loading || !q ? (
-          <div className="opacity-70 text-sm">Loading…</div>
+          <div className="opacity-70 text-sm">LoadingвЂ¦</div>
         ) : (
           <div className={`rounded-xl p-3 bg-black/25 border ${flash==='right'?'border-emerald-400':flash==='wrong'?'border-rose-400':'border-white/10'}`}>
             <div className="text-sm font-medium mb-3">{q.prompt}</div>
@@ -113,7 +113,7 @@ export default function QuestionModal({ open = true, question, userTaskId, onClo
               ))}
             </div>
             <div className="text-[11px] opacity-60 mt-3">
-              Worth: ✨{q.xp ?? 0} · 💰{q.creds ?? 0}
+              Worth: вњЁ{q.xp ?? 0} В· рџ’°{q.creds ?? 0}
             </div>
           </div>
         )}
@@ -121,3 +121,4 @@ export default function QuestionModal({ open = true, question, userTaskId, onClo
     </div>
   );
 }
+

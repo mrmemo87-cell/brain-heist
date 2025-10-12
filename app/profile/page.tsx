@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useEffect, useMemo, useState } from 'react';
 import { supabase } from '@/lib/supa';
@@ -42,7 +42,6 @@ export default function ProfilePage() {
         const uid = await getUid(supabase);
 
         // ensure rows exist (safety if user came in with existing session)
-        try { await supabase.rpc('rpc_session_start'); } catch {}
 
         const [{ data: p }, { data: u }] = await Promise.all([
           supabase.from('profiles').select('uid,username,avatar_url,bio').eq('uid', uid).maybeSingle(),
@@ -93,20 +92,20 @@ export default function ProfilePage() {
       <h1>Profile</h1>
       {err && <div className="text-sm rounded-xl bg-rose-500/15 border border-rose-500/40 p-3">{err}</div>}
       {loading || !me ? (
-        <div className="opacity-70 text-sm">Loading…</div>
+        <div className="opacity-70 text-sm">LoadingвЂ¦</div>
       ) : (
         <>
           <section className="card border-glow flex items-center gap-4">
             <div className="w-16 h-16 rounded-full bg-black/30 overflow-hidden flex items-center justify-center">
-              {me.avatar_url ? <img src={me.avatar_url} alt="" className="w-full h-full object-cover" /> : <span className="text-xl">👤</span>}
+              {me.avatar_url ? <img src={me.avatar_url} alt="" className="w-full h-full object-cover" /> : <span className="text-xl">рџ‘¤</span>}
             </div>
             <div className="flex-1">
               <div className="text-lg font-semibold">{me.username ?? me.uid.slice(0, 6)}</div>
-              <div className="text-xs opacity-80">Batch {me.batch ?? '—'} · Rank {me.rank ?? 0}</div>
+              <div className="text-xs opacity-80">Batch {me.batch ?? 'вЂ”'} В· Rank {me.rank ?? 0}</div>
             </div>
             <div className="flex items-center gap-2">
-              <div className="px-3 py-2 rounded-xl bg-[var(--c-card)]/70 text-sm">✨ {me.xp ?? 0}</div>
-              <div className="px-3 py-2 rounded-xl bg-[var(--c-card)]/70 text-sm">💰 {me.creds ?? 0}</div>
+              <div className="px-3 py-2 rounded-xl bg-[var(--c-card)]/70 text-sm">вњЁ {me.xp ?? 0}</div>
+              <div className="px-3 py-2 rounded-xl bg-[var(--c-card)]/70 text-sm">рџ’° {me.creds ?? 0}</div>
             </div>
           </section>
 
@@ -122,7 +121,7 @@ export default function ProfilePage() {
               <div className="text-sm">Items owned: <b>{ach.itemsOwned}</b></div>
             </div>
             <div className="card"><div className="text-sm opacity-70 mb-2">Bio</div>
-              <div className="text-sm opacity-90">{me.bio ?? '—'}</div>
+              <div className="text-sm opacity-90">{me.bio ?? 'вЂ”'}</div>
             </div>
           </section>
 
@@ -136,7 +135,7 @@ export default function ProfilePage() {
                     <div className="opacity-80 text-xs">Effect: {e.effect}</div>
                     <div className="opacity-80 text-xs">
                       Started {new Date(e.started_at).toLocaleString()}
-                      {e.expires_at && <> · Expires {new Date(e.expires_at).toLocaleTimeString()}</>}
+                      {e.expires_at && <> В· Expires {new Date(e.expires_at).toLocaleTimeString()}</>}
                     </div>
                   </li>
                 ))}
@@ -148,3 +147,5 @@ export default function ProfilePage() {
     </main>
   );
 }
+
+

@@ -1,4 +1,4 @@
-// lib/settings.ts
+﻿// lib/settings.ts
 import { makeBHClient } from "./bhClient";
 
 const bh = makeBHClient(
@@ -17,3 +17,4 @@ export async function getSettings(keys?: string[]) {
   cache = { ...(cache ?? {}), ...map };
   return map;
 }
+

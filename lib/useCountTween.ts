@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+﻿import { useEffect, useRef, useState } from 'react';
 
 export function useCountTween(value: number, ms = 400) {
   const [display, setDisplay] = useState(value);
@@ -28,3 +28,4 @@ export function useCountTween(value: number, ms = 400) {
 
   return display;
 }
+

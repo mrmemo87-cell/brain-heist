@@ -1,4 +1,4 @@
-import { createClient, type SupabaseClient } from '@supabase/supabase-js';
+﻿import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 
 let _sb: SupabaseClient | null = null;
 
@@ -19,3 +19,4 @@ export function getSupabase(): SupabaseClient {
 }
 
 export const supabase = getSupabase();
+

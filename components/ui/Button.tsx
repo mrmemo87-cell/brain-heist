@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import clsx from 'clsx';
 
@@ -22,3 +22,4 @@ export default function Button({ variant='primary', size='md', className, ...pro
     />
   );
 }
+

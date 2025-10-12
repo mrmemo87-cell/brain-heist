@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useEffect, useMemo, useState } from 'react';
 import { supabase } from '@/lib/supa';
@@ -56,14 +56,14 @@ export default function HackFeed({ limit = 20 }: { limit?: number }) {
 
   function toMessage(n: News): { text: React.ReactNode; typeKey: string } | null {
     const t = n.type ?? '';
-    const A = <b>{n.actor_name ?? '—'}</b>;
-    const T = <b>{n.target_name ?? '—'}</b>;
+    const A = <b>{n.actor_name ?? 'вЂ”'}</b>;
+    const T = <b>{n.target_name ?? 'вЂ”'}</b>;
     const name = (n.payload?.name as string) || (n.payload?.item_name as string) || (n.payload?.item_id as string) || '';
     const amount = n.amount ?? 0;
     switch (t) {
-      case 'HACK_WIN':  return { text: <>{A} stole 💰{amount} from {T}</>, typeKey: 'HACK_WIN' };
+      case 'HACK_WIN':  return { text: <>{A} stole рџ’°{amount} from {T}</>, typeKey: 'HACK_WIN' };
       case 'HACK_FAIL': return { text: <>{A} tried to hack {T} and failed</>, typeKey: 'HACK_FAIL' };
-      case 'TASK_XP':   return { text: <>{A} solved a task (+✨{n.xp ?? 0}{amount ? `, +💰${amount}` : ''})</>, typeKey: 'TASK_XP' };
+      case 'TASK_XP':   return { text: <>{A} solved a task (+вњЁ{n.xp ?? 0}{amount ? `, +рџ’°${amount}` : ''})</>, typeKey: 'TASK_XP' };
       case 'SHOP_BUY':  return { text: <>{A} bought <b>{name || 'an item'}</b></>, typeKey: 'SHOP_BUY' };
       case 'ITEM_ACTIVATE': return { text: <>{A} activated <b>{name || 'an effect'}</b></>, typeKey: 'ITEM_ACTIVATE' };
       case 'ITEM_CONSUME':  return { text: <>{A} used <b>{name || 'an item'}</b></>, typeKey: 'ITEM_CONSUME' };
@@ -111,7 +111,7 @@ export default function HackFeed({ limit = 20 }: { limit?: number }) {
     <div className="space-y-3">
       {err && <div className="text-sm rounded-xl bg-rose-500/15 border border-rose-500/40 p-3">{err}</div>}
       {loading ? (
-        <div className="opacity-70 text-sm">Loading feed…</div>
+        <div className="opacity-70 text-sm">Loading feedвЂ¦</div>
       ) : rows.length === 0 ? (
         <div className="opacity-70 text-sm">Nothing yet. Try a hack or a task!</div>
       ) : (
@@ -137,3 +137,4 @@ export default function HackFeed({ limit = 20 }: { limit?: number }) {
     </div>
   );
 }
+

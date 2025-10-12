@@ -1,4 +1,4 @@
-import { supabase } from '@/lib/supa';
+﻿import { supabase } from '@/lib/supa';
 
 export type FeedItem = {
   kind: 'news' | 'hack';
@@ -66,3 +66,4 @@ export async function getFeed(limit = 50): Promise<FeedItem[]> {
     payload: null,
   }));
 }
+

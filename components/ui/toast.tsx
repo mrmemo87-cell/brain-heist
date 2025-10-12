@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 import { createContext, useContext, useState, useCallback, useEffect } from 'react';
 
 type Toast = { id: number; text: string };
@@ -31,3 +31,4 @@ export function useToast() {
   if (!ctx) throw new Error('ToastProvider missing');
   return ctx.push;
 }
+

@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useMemo, useState } from 'react';
 import { supabase } from '@/lib/supa';
@@ -7,10 +7,10 @@ type Counts = { [emoji: string]: number };
 
 export default function Reactions({ ts, initial }: { ts: string; initial?: Counts }) {
   const supa = supabase;
-  const [counts, setCounts] = useState<Counts>(initial ?? { '🔥': 0, '😈': 0, '🛡️': 0, '😭': 0 });
+  const [counts, setCounts] = useState<Counts>(initial ?? { 'рџ”Ґ': 0, 'рџ€': 0, 'рџ›ЎпёЏ': 0, 'рџ­': 0 });
   const [busy, setBusy] = useState<string | null>(null);
 
-  async function react(emoji: '🔥'|'😈'|'🛡️'|'😭') {
+  async function react(emoji: 'рџ”Ґ'|'рџ€'|'рџ›ЎпёЏ'|'рџ­') {
     if (busy) return;
     setBusy(emoji);
     try {
@@ -27,7 +27,7 @@ export default function Reactions({ ts, initial }: { ts: string; initial?: Count
 
   return (
     <div className="flex items-center gap-2 text-xs">
-      {(['🔥','😈','🛡️','😭'] as const).map(e => (
+      {(['рџ”Ґ','рџ€','рџ›ЎпёЏ','рџ­'] as const).map(e => (
         <button
           key={e}
           disabled={busy!==null}
@@ -40,3 +40,4 @@ export default function Reactions({ ts, initial }: { ts: string; initial?: Count
     </div>
   );
 }
+

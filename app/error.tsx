@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 export default function Error({ reset }: { reset: () => void }) {
   return (
     <div className="min-h-screen grid place-items-center">
@@ -9,3 +9,4 @@ export default function Error({ reset }: { reset: () => void }) {
     </div>
   );
 }
+

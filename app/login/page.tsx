@@ -1,12 +1,12 @@
-import React from 'react';
+﻿import React from 'react';
 import LoginClient from './LoginClient';
 
-export const metadata = { title: 'Login · Brain Heist' };
+export const metadata = { title: 'Login В· Brain Heist' };
 
 export default function Page() {
   return (
     <div className="relative min-h-[calc(100vh-56px)] grid place-items-center overflow-hidden">
-      {/* BG image (your art) — put something at /public/assets/ui/login-bg.jpg */}
+      {/* BG image (your art) вЂ” put something at /public/assets/ui/login-bg.jpg */}
       <div className="absolute inset-0 -z-10 bg-[radial-gradient(1200px_600px_at_50%_-200px,rgba(126,255,202,.35),transparent_60%)]" />
       <div className="absolute inset-0 -z-20 bg-[url('/assets/ui/login-bg.jpg')] bg-cover bg-center opacity-[.16]" />
       {/* cyber grid */}
@@ -27,3 +27,4 @@ export default function Page() {
     </div>
   );
 }
+
