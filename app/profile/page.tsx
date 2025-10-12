@@ -6,7 +6,6 @@ import { ProgressBar } from "@/components/ProgressBar";
 
 type UserRow = {
   uid: string;
-  username?: string | null;
   xp?: number | null;
   creds?: number | null;
   hack_skill?: number | null;
@@ -27,12 +26,12 @@ type EffectRow = {
 
 const secsLeft = (e: EffectRow) => {
   const end = e.expires_at ? new Date(e.expires_at).getTime() : 0;
-  const now = Date.now();
-  return Math.max(0, Math.floor((end - now) / 1000));
+  return Math.max(0, Math.floor((end - Date.now()) / 1000));
 };
 
 export default function ProfilePage() {
   const [me, setMe] = useState<UserRow | null>(null);
+  const [displayName, setDisplayName] = useState("You");
   const [bio, setBio] = useState("");
   const [effects, setEffects] = useState<EffectRow[]>([]);
   const [saving, setSaving] = useState(false);
@@ -41,19 +40,31 @@ export default function ProfilePage() {
   useEffect(() => {
     (async () => {
       setErr(null);
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { user }, error: aerr } = await supabase.auth.getUser();
+      if (aerr) { setErr(aerr.message); return; }
       const uid = user?.id;
       if (!uid) { setErr("Not signed in"); return; }
 
-      // users (needs RLS select self policy)
-      const { data: u, error: uerr } = await supabase.from("users")
-        .select("uid,username,xp,creds,hack_skill,security_level,streak_days,bio")
-        .eq("uid", uid).maybeSingle();
+      // Fallback name: auth metadata -> email username -> "You"
+      const fallback =
+        (user?.user_metadata as any)?.name ??
+        (user?.user_metadata as any)?.username ??
+        (user?.email?.split("@")[0]) ??
+        "You";
+      setDisplayName(fallback);
+
+      // users row (NO username here)
+      const { data: u, error: uerr } = await supabase
+        .from("users")
+        .select("uid,xp,creds,hack_skill,security_level,streak_days,bio")
+        .eq("uid", uid)
+        .maybeSingle();
       if (uerr) setErr(uerr.message);
       if (u) { setMe(u as any); setBio((u as any).bio ?? ""); }
 
       // active effects
-      const { data: fx } = await supabase.from("active_effects")
+      const { data: fx } = await supabase
+        .from("active_effects")
         .select("id,user_id,item_key,effect,started_at,expires_at,duration_seconds")
         .eq("user_id", uid)
         .order("expires_at", { ascending: false });
@@ -79,11 +90,11 @@ export default function ProfilePage() {
     <main className="max-w-6xl mx-auto px-4 py-8 space-y-8">
       {err && <div className="text-sm rounded-xl bg-rose-50 border border-rose-200 text-rose-700 p-3">{err}</div>}
 
-      {/* Top card (light/glass) */}
+      {/* Top card */}
       <section className="card rounded-3xl p-6 shadow-[0_10px_40px_rgba(2,132,199,.15)]">
         <div className="flex items-center justify-between">
           <div>
-            <div className="text-2xl font-bold">{me?.username ?? "You"}</div>
+            <div className="text-2xl font-bold">{displayName}</div>
             <div className="text-xs text-[var(--c-muted)] mt-1">Rank 0 • Squad: A</div>
           </div>
           <div className="flex gap-2">
@@ -153,13 +164,7 @@ export default function ProfilePage() {
         <div className="mt-2">
           <button
             disabled={saving || bio === (me?.bio ?? "")}
-            onClick={async()=>{
-              setSaving(true);
-              try{
-                const { error } = await supabase.from("users").update({ bio }).eq("uid", me?.uid);
-                if (error) throw error;
-              } finally { setSaving(false); }
-            }}
+            onClick={saveBio}
             className="px-4 py-2 rounded-xl bg-gradient-to-r from-cyan-400 to-fuchsia-400 text-black font-semibold hover:opacity-90 disabled:opacity-50"
           >
             {saving ? "Saving…" : "Save Bio"}
