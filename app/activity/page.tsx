@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React from 'react';
 import TargetsList from '@/components/TargetsList';
@@ -23,3 +23,4 @@ export default function ActivityPage() {
     </main>
   );
 }
+

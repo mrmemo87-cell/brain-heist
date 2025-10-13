@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -29,6 +29,7 @@ export default function AuthGate({ children }: { children: React.ReactNode }) {
     return () => { if (unsub) unsub(); };
   }, [router]);
 
-  if (!ready) return <div className="p-6">Loading…</div>;
+  if (!ready) return <div className="p-6">LoadingвЂ¦</div>;
   return <>{children}</>;
 }
+

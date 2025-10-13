@@ -1,150 +1,183 @@
-'use client';
+﻿"use client";
 
-import React, { useEffect, useMemo, useState } from 'react';
-import { supabase } from '@/lib/supa';
-import { getUid } from '../../lib/auth';
+import { useEffect, useState } from "react";
+import { supabase } from "@/lib/supa";
+import { ProgressBar } from "@/components/ProgressBar";
 
-type Me = {
-  uid: string;
-  username: string | null;
-  avatar_url: string | null;
-  bio: string | null;
-  batch: string | null;
-  rank: number | null;
-  xp: number | null;
-  creds: number | null;
-  hack_level: number | null;
-  sec_level: number | null;
-  streak: number | null;
-};
+type UserRow = Record<string, any>;
 
-type Effect = {
+type EffectRow = {
   id: number;
+  user_id: string;
   item_key: string;
   effect: string;
   started_at: string;
-  duration_seconds: number;
   expires_at: string | null;
+  duration_seconds: number;
 };
 
+const secsLeft = (e: EffectRow) => {
+  const end = e.expires_at ? new Date(e.expires_at).getTime() : 0;
+  return Math.max(0, Math.floor((end - Date.now()) / 1000));
+};
+
+// pick first present numeric field
+function pickNum(obj: any, keys: string[], fallback = 0) {
+  for (const k of keys) {
+    if (obj && obj[k] !== undefined && obj[k] !== null) {
+      const n = Number(obj[k]);
+      if (!Number.isNaN(n)) return n;
+    }
+  }
+  return fallback;
+}
+
 export default function ProfilePage() {
-  const supa = supabase;
-  const [me, setMe] = useState<Me | null>(null);
-  const [effects, setEffects] = useState<Effect[]>([]);
-  const [ach, setAch] = useState({ hacksWon: 0, tasksDone: 0, itemsOwned: 0 });
-  const [err, setErr] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [me, setMe] = useState<UserRow | null>(null);
+  const [displayName, setDisplayName] = useState("You");
+  const [bio, setBio] = useState("");
+  const [effects, setEffects] = useState<EffectRow[]>([]);
+  const [saving, setSaving] = useState(false);
+  const [err, setErr] = useState<string|null>(null);
 
   useEffect(() => {
     (async () => {
-      setErr(null); setLoading(true);
-      try {
-        const uid = await getUid(supabase);
+      setErr(null);
+      const { data: { user }, error: aerr } = await supabase.auth.getUser();
+      if (aerr) { setErr(aerr.message); return; }
+      const uid = user?.id;
+      if (!uid) { setErr("Not signed in"); return; }
 
-        // ensure rows exist (safety if user came in with existing session)
-        try { await supabase.rpc('rpc_session_start'); } catch {}
+      const fallback =
+        (user?.user_metadata as any)?.name ??
+        (user?.user_metadata as any)?.username ??
+        (user?.email?.split("@")[0]) ??
+        "You";
+      setDisplayName(fallback);
 
-        const [{ data: p }, { data: u }] = await Promise.all([
-          supabase.from('profiles').select('uid,username,avatar_url,bio').eq('uid', uid).maybeSingle(),
-          supabase.from('users').select('batch,rank,xp,creds,hack_level,sec_level,streak').eq('uid', uid).maybeSingle(),
-        ]);
+      // ✅ request ALL columns to avoid “column does not exist” errors
+      const { data: u, error: uerr } = await supabase
+        .from("users")
+        .select("*")
+        .eq("uid", uid)
+        .maybeSingle();
+      if (uerr) setErr(uerr.message);
+      if (u) { setMe(u as any); setBio((u as any).bio ?? ""); }
 
-        setMe({
-          uid,
-          username: (p as any)?.username ?? null,
-          avatar_url: (p as any)?.avatar_url ?? null,
-          bio: (p as any)?.bio ?? null,
-          batch: (u as any)?.batch ?? null,
-          rank: Number((u as any)?.rank ?? 0),
-          xp: Number((u as any)?.xp ?? 0),
-          creds: Number((u as any)?.creds ?? 0),
-          hack_level: Number((u as any)?.hack_level ?? 1),
-          sec_level: Number((u as any)?.sec_level ?? 1),
-          streak: Number((u as any)?.streak ?? 0),
-        });
-
-        const { data: fx } = await supabase
-          .from('active_effects')
-          .select('id,item_key,effect,started_at,duration_seconds,expires_at')
-          .eq('user_id', uid)
-          .order('started_at', { ascending: false });
-        setEffects(((fx ?? []) as Effect[]));
-
-        const [hacks, tasks, inv] = await Promise.all([
-          supabase.from('hacks').select('id', { count: 'exact', head: true }).eq('attacker', uid).eq('success', true),
-          supabase.from('attempts').select('id', { count: 'exact', head: true }).eq('uid', uid).eq('correct', true),
-          supabase.from('inventory').select('id', { count: 'exact', head: true }).eq('uid', uid),
-        ]);
-        setAch({
-          hacksWon: hacks.count ?? 0,
-          tasksDone: tasks.count ?? 0,
-          itemsOwned: inv.count ?? 0,
-        });
-      } catch (e: any) {
-        setErr(e?.message ?? 'Failed to load profile');
-      } finally {
-        setLoading(false);
-      }
+      const { data: fx } = await supabase
+        .from("active_effects")
+        .select("id,user_id,item_key,effect,started_at,expires_at,duration_seconds")
+        .eq("user_id", uid)
+        .order("expires_at", { ascending: false });
+      setEffects((fx ?? []).filter(e => secsLeft(e as any) > 0) as any);
     })();
-  }, [supabase]);
+  }, []);
+
+  async function saveBio() {
+    if (!me) return;
+    setSaving(true);
+    try {
+      const { error } = await supabase.from("users").update({ bio }).eq("uid", me.uid);
+      if (error) throw error;
+    } catch (e:any) { setErr(e?.message ?? "Failed to save bio"); }
+    finally { setSaving(false); }
+  }
+
+  // Safely derive numbers from whatever fields exist
+  const xp    = pickNum(me, ["xp"]);
+  const creds = pickNum(me, ["creds","coins"]);
+  const hack  = pickNum(me, ["hack_skill","hack","skill","hacklevel","hack_level"], 0);
+  const sec   = pickNum(me, ["security_level","security","defense","shield_level"], 0);
+  const streak= pickNum(me, ["streak_days","streak","streakdays"], 0);
 
   return (
-    <main className="space-y-5">
-      <h1>Profile</h1>
-      {err && <div className="text-sm rounded-xl bg-rose-500/15 border border-rose-500/40 p-3">{err}</div>}
-      {loading || !me ? (
-        <div className="opacity-70 text-sm">Loading…</div>
-      ) : (
-        <>
-          <section className="card border-glow flex items-center gap-4">
-            <div className="w-16 h-16 rounded-full bg-black/30 overflow-hidden flex items-center justify-center">
-              {me.avatar_url ? <img src={me.avatar_url} alt="" className="w-full h-full object-cover" /> : <span className="text-xl">👤</span>}
-            </div>
-            <div className="flex-1">
-              <div className="text-lg font-semibold">{me.username ?? me.uid.slice(0, 6)}</div>
-              <div className="text-xs opacity-80">Batch {me.batch ?? '—'} · Rank {me.rank ?? 0}</div>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="px-3 py-2 rounded-xl bg-[var(--c-card)]/70 text-sm">✨ {me.xp ?? 0}</div>
-              <div className="px-3 py-2 rounded-xl bg-[var(--c-card)]/70 text-sm">💰 {me.creds ?? 0}</div>
-            </div>
-          </section>
+    <main className="max-w-6xl mx-auto px-4 py-8 space-y-8">
+      {err && <div className="text-sm rounded-xl bg-rose-50 border border-rose-200 text-rose-700 p-3">{err}</div>}
 
-          <section className="grid md:grid-cols-3 gap-3">
-            <div className="card"><div className="text-sm opacity-70 mb-2">Powers</div>
-              <div className="text-sm">Hack skill: <b>{me.hack_level}</b></div>
-              <div className="text-sm">Security level: <b>{me.sec_level}</b></div>
-              <div className="text-sm">Streak: <b>{me.streak}</b> days</div>
-            </div>
-            <div className="card"><div className="text-sm opacity-70 mb-2">Achievements</div>
-              <div className="text-sm">Hacks won: <b>{ach.hacksWon}</b></div>
-              <div className="text-sm">Tasks solved: <b>{ach.tasksDone}</b></div>
-              <div className="text-sm">Items owned: <b>{ach.itemsOwned}</b></div>
-            </div>
-            <div className="card"><div className="text-sm opacity-70 mb-2">Bio</div>
-              <div className="text-sm opacity-90">{me.bio ?? '—'}</div>
-            </div>
-          </section>
+      <section className="card rounded-3xl p-6 shadow-[0_10px_40px_rgba(2,132,199,.15)]">
+        <div className="flex items-center justify-between">
+          <div>
+            <div className="text-2xl font-bold">{displayName}</div>
+            <div className="text-xs text-[var(--c-muted)] mt-1">Rank 0 • Squad: A</div>
+          </div>
+          <div className="flex gap-2">
+            <span className="px-3 py-1 rounded-xl bg-cyan-50 border border-cyan-200 text-cyan-700 text-sm">✨ {xp}</span>
+            <span className="px-3 py-1 rounded-xl bg-amber-50 border border-amber-200 text-amber-700 text-sm">🪙 {creds}</span>
+          </div>
+        </div>
+      </section>
 
-          <section className="card">
-            <h2>Active Effects</h2>
-            {effects.length === 0 ? <div className="opacity-70 text-sm mt-1">No active effects.</div> : (
-              <ul className="mt-2 grid md:grid-cols-2 gap-2">
-                {effects.map(e => (
-                  <li key={e.id} className="rounded-xl bg-[var(--c-card)]/70 p-3 text-sm">
-                    <div className="font-medium">{e.item_key}</div>
-                    <div className="opacity-80 text-xs">Effect: {e.effect}</div>
-                    <div className="opacity-80 text-xs">
-                      Started {new Date(e.started_at).toLocaleString()}
-                      {e.expires_at && <> · Expires {new Date(e.expires_at).toLocaleTimeString()}</>}
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </section>
-        </>
-      )}
+      <section className="grid md:grid-cols-3 gap-4">
+        <div className="card p-4">
+          <div className="text-sm mb-1">Hack skill</div>
+          <ProgressBar value={Math.min(1, Math.max(0, hack/100))} className="mt-2" />
+          <div className="text-[11px] text-[var(--c-muted)] mt-1">{hack}/100</div>
+        </div>
+        <div className="card p-4">
+          <div className="text-sm mb-1">Security level</div>
+          <ProgressBar value={Math.min(1, Math.max(0, sec/100))} className="mt-2" />
+          <div className="text-[11px] text-[var(--c-muted)] mt-1">{sec}/100</div>
+        </div>
+        <div className="card p-4">
+          <div className="text-sm mb-1">Streak (days)</div>
+          <ProgressBar value={Math.min(1, Math.max(0, streak/30))} className="mt-2" />
+          <div className="text-[11px] text-[var(--c-muted)] mt-1">{streak}/30</div>
+        </div>
+      </section>
+
+      <section className="card p-4">
+        <div className="text-lg font-semibold mb-3">Active Effects</div>
+        {effects.length === 0 ? (
+          <div className="text-sm text-[var(--c-muted)]">No active items.</div>
+        ) : (
+          <ul className="space-y-3">
+            {effects.map((e) => {
+              const left = secsLeft(e as any);
+              const total = Math.max(1, (e as any).duration_seconds);
+              const ratio = left / total;
+              const m = Math.floor(left/60), s = left%60;
+              return (
+                <li key={(e as any).id} className="p-3 rounded-xl border border-[var(--c-border)] bg-white">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="text-sm font-medium">{(e as any).item_key.replace(/_/g," ")}</div>
+                    <div className="text-xs text-[var(--c-muted)]">{m}:{String(s).padStart(2,"0")} left</div>
+                  </div>
+                  <ProgressBar value={ratio} reverse className="h-3" />
+                  <div className="text-[11px] text-[var(--c-muted)] mt-1">{(e as any).effect}</div>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </section>
+
+      <section className="card p-4">
+        <div className="text-lg font-semibold mb-2">Bio</div>
+        <p className="text-xs text-[var(--c-muted)] mb-2">Drop a scary one-liner to keep hackers away 😈</p>
+        <textarea
+          value={bio}
+          onChange={(e)=>setBio(e.target.value)}
+          rows={3}
+          className="w-full rounded-xl bg-white border border-[var(--c-border)] p-3 text-sm outline-none focus:ring-2 focus:ring-cyan-300"
+          placeholder="e.g. I collect failed hack logs for breakfast."
+        />
+        <div className="mt-2">
+          <button
+            disabled={saving || bio === (me?.bio ?? "")}
+            onClick={async()=>{
+              if (!me) return;
+              setSaving(true);
+              try {
+                const { error } = await supabase.from("users").update({ bio }).eq("uid", me.uid);
+                if (error) throw error;
+              } finally { setSaving(false); }
+            }}
+            className="px-4 py-2 rounded-xl bg-gradient-to-r from-cyan-400 to-fuchsia-400 text-black font-semibold hover:opacity-90 disabled:opacity-50"
+          >
+            {saving ? "Saving…" : "Save Bio"}
+          </button>
+        </div>
+      </section>
     </main>
   );
 }

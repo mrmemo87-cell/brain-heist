@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useMemo, useRef, useState } from 'react';
 import { supabase } from '@/lib/supa';
@@ -40,7 +40,7 @@ export default function LoginClient() {
       <input
         type="password" autoComplete="current-password" required
         value={pass} onChange={e=>setPass(e.target.value)}
-        className="bh-input mb-4" placeholder="••••••••"
+        className="bh-input mb-4" placeholder="вЂўвЂўвЂўвЂўвЂўвЂўвЂўвЂў"
         onKeyDown={(e)=>{ if (e.key==='Enter') { e.preventDefault(); void onSubmit(); } }}
       />
 
@@ -51,7 +51,7 @@ export default function LoginClient() {
           type="submit" disabled={busy}
           className={`w-full bh-btn ${busy ? 'opacity-70 cursor-wait' : ''}`}
         >
-          {busy ? 'Signing in…' : 'Sign in'}
+          {busy ? 'Signing inвЂ¦' : 'Sign in'}
         </button>
       </RippleBox>
 
@@ -61,3 +61,4 @@ export default function LoginClient() {
     </form>
   );
 }
+

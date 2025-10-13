@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useEffect, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
@@ -25,7 +25,6 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
 
       if (has) {
         setTimeout(async () => {
-          await supabase.rpc('rpc_session_start');
           await supabase.rpc('rpc_touch_online');
         }, 0);
       } else if (!PUBLIC.has(pathname)) {
@@ -37,7 +36,6 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
         if (evt === 'SIGNED_IN' && sess) {
           setAuthed(true);
           setTimeout(async () => {
-            await supabase.rpc('rpc_session_start');
             await supabase.rpc('rpc_touch_online');
           }, 0);
           if (pathname === '/login' || pathname === '/signup') router.replace('/');
@@ -70,10 +68,12 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
 
   if (!ready) {
     return <div className="fixed inset-0 grid place-items-center">
-      <div className="animate-pulse opacity-70 text-sm">Loading…</div>
+      <div className="animate-pulse opacity-70 text-sm">LoadingвЂ¦</div>
     </div>;
   }
 
   if (authed === false && !PUBLIC.has(pathname)) return null;
   return <>{children}</>;
 }
+
+

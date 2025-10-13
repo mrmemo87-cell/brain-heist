@@ -1,4 +1,4 @@
-import { SupabaseClient } from '@supabase/supabase-js';
+﻿import { SupabaseClient } from '@supabase/supabase-js';
 export async function getUid(supabase: SupabaseClient, waitMs = 6000): Promise<string> {
   let { data } = await supabase.auth.getSession();
   let uid = data.session?.user?.id ?? null;
@@ -11,3 +11,4 @@ export async function getUid(supabase: SupabaseClient, waitMs = 6000): Promise<s
   if (!uid) throw new Error('Not logged in');
   return uid;
 }
+

@@ -1,4 +1,4 @@
-import './globals.css';
+﻿import './globals.css';
 import React from 'react';
 import AppHeader from '@/components/AppHeader';
 import AuthGuard from '@/components/AuthGuard';
@@ -25,3 +25,5 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     </html>
   );
 }
+
+

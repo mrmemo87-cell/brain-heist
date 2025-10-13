@@ -1,17 +1,13 @@
-'use client';
-import { useEffect } from 'react';
-import { createClient } from '@supabase/supabase-js';
+﻿"use client";
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { supabase } from "@/lib/supa";
 
-export default function Logout() {
+export default function LogoutPage() {
+  const router = useRouter();
   useEffect(() => {
-    const sb = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    );
-    (async () => {
-      try { await sb.auth.signOut(); } catch {}
-      window.location.href = '/login';
-    })();
-  }, []);
-  return <div className="card p-4">Signing out…</div>;
+    supabase.auth.signOut().finally(() => router.replace("/"));
+  }, [router]);
+  return null;
 }
+

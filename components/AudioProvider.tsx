@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useEffect, useRef } from 'react';
 
@@ -14,7 +14,7 @@ const SFX = {
   hackFail:() => new Audio('/sounds/hack_fail.mp3').play(),
 };
 
-// 👉 hook your pages/components can import
+// рџ‘‰ hook your pages/components can import
 export function useAudio() {
   return SFX;
 }
@@ -39,3 +39,4 @@ export default function AudioProvider({ children }: { children: React.ReactNode 
 
   return <>{children}</>;
 }
+

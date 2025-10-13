@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 // components/AppBoot.tsx
 import { useEffect, useMemo } from 'react';
@@ -9,10 +9,11 @@ export default function AppBoot() {
 
   useEffect(() => {
     (async () => {
-      try { await supabase.rpc('rpc_session_start'); } catch {}
       try { await supabase.rpc('rpc_touch_online'); } catch {}
     })();
   }, [supabase]);
 
   return null;
 }
+
+

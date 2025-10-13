@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React from 'react';
 
@@ -26,3 +26,4 @@ export function RippleBox({ children, className, ...rest }:{
     </div>
   );
 }
+

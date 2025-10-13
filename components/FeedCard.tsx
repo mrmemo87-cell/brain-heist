@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 
 type FeedItem = {
   kind: 'news' | 'hack'; id: string; ts: string;
@@ -17,17 +17,17 @@ export default function FeedCard({ it }: { it: FeedItem }) {
     return (
       <div className="rounded-2xl p-3 bg-[var(--c-card)]/70 shadow">
         <div className="flex items-center gap-2 text-xs opacity-80">
-          <span>{it.icon ?? '🟦'}</span>
+          <span>{it.icon ?? 'рџџ¦'}</span>
           <span className="uppercase tracking-wide">{it.type ?? 'EVENT'}</span>
           <span className="ml-auto">{time}</span>
         </div>
         <div className="mt-1 text-xs">
-          <b>{it.actor_name ?? '—'}</b> → {it.target_name ?? '—'}
+          <b>{it.actor_name ?? 'вЂ”'}</b> в†’ {it.target_name ?? 'вЂ”'}
         </div>
         {(it.amount != null || it.xp != null) && (
           <div className="mt-1 text-xs">
-            {it.amount != null && <span className="mr-3">💰 {it.amount}</span>}
-            {it.xp != null && <span>✨ {it.xp}</span>}
+            {it.amount != null && <span className="mr-3">рџ’° {it.amount}</span>}
+            {it.xp != null && <span>вњЁ {it.xp}</span>}
           </div>
         )}
       </div>
@@ -42,16 +42,17 @@ export default function FeedCard({ it }: { it: FeedItem }) {
     <div className="rounded-2xl p-3 bg-[var(--c-card)]/70 shadow">
       <div className="flex items-center gap-2 text-xs">
         <span className={`uppercase tracking-wide ${outcomeClass}`}>
-          {it.outcome ?? '—'}
+          {it.outcome ?? 'вЂ”'}
         </span>
         <span className="ml-auto">{time}</span>
       </div>
       <div className="mt-1 text-xs">
-        <b>{it.actor_name ?? '—'}</b> → {it.target_name ?? '—'}
+        <b>{it.actor_name ?? 'вЂ”'}</b> в†’ {it.target_name ?? 'вЂ”'}
       </div>
       <div className="mt-1 text-xs">
-        💰 {it.coins_awarded ?? 0} · ✨ {it.xp_awarded ?? 0} · P(win) {(it.win_prob ?? 0).toFixed(2)}
+        рџ’° {it.coins_awarded ?? 0} В· вњЁ {it.xp_awarded ?? 0} В· P(win) {(it.win_prob ?? 0).toFixed(2)}
       </div>
     </div>
   );
 }
+

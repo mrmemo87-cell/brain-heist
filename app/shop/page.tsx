@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useEffect, useMemo, useState } from 'react';
 import { supabase } from '@/lib/supa';
@@ -78,7 +78,7 @@ export default function ShopPage() {
       <h1>Shop</h1>
       {err && <div className="text-sm rounded-xl bg-rose-500/15 border border-rose-500/40 p-3">{err}</div>}
       {loading ? (
-        <div className="opacity-70 text-sm">Loading shop…</div>
+        <div className="opacity-70 text-sm">Loading shopвЂ¦</div>
       ) : (
         <ul className="grid md:grid-cols-2 gap-3">
           {items.map((it) => {
@@ -88,7 +88,7 @@ export default function ShopPage() {
                 <div className="flex items-center justify-between gap-3">
                   <div>
                     <div className="text-sm font-semibold">{it.name}</div>
-                    <div className="text-xs opacity-70">{it.kind ?? '—'} · {it.description ?? ''}</div>
+                    <div className="text-xs opacity-70">{it.kind ?? 'вЂ”'} В· {it.description ?? ''}</div>
                     <div className="text-xs opacity-80 mt-1">Owned: {count}</div>
                   </div>
                   <button
@@ -96,7 +96,7 @@ export default function ShopPage() {
                     onClick={() => void buy(it.id)}
                     className="px-3 py-2 rounded-xl text-sm bg-[var(--c-primary)]/80 hover:opacity-90 disabled:opacity-50"
                   >
-                    Buy 💰{it.price}
+                    Buy рџ’°{it.price}
                   </button>
                 </div>
               </li>
@@ -107,3 +107,4 @@ export default function ShopPage() {
     </main>
   );
 }
+

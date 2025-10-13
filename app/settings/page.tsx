@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 import { useEffect, useState } from 'react';
 
 const THEMES = [
@@ -32,7 +32,7 @@ export default function Settings() {
             <button key={t.id} onClick={()=>setTheme(t.id)} className={`btn ${theme===t.id?'btn-primary':'btn-ghost'}`}>{t.name}</button>
           ))}
         </div>
-        <div className="text-sm text-ink-400 mt-2">More themes coming — neon cyberpunk, vaporwave, hacker grid.</div>
+        <div className="text-sm text-ink-400 mt-2">More themes coming вЂ” neon cyberpunk, vaporwave, hacker grid.</div>
       </div>
 
       <div className="card p-4">
@@ -52,3 +52,4 @@ export default function Settings() {
     </div>
   );
 }
+

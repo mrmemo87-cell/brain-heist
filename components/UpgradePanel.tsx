@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useEffect, useMemo, useState } from 'react';
 import { supabase } from '@/lib/supa';
@@ -29,7 +29,6 @@ export default function UpgradePanel() {
       if (!uid) { window.location.href = '/login'; return; }
 
       // ensure rows exist (no-throw)
-      try { await supabase.rpc('rpc_session_start'); } catch {}
 
       const { data, error } = await supabase
         .from('users')
@@ -79,7 +78,7 @@ export default function UpgradePanel() {
 
   if (loading) return (
     <section className="rounded-2xl p-4 bg-[var(--c-card)]/70 border border-white/10">
-      <div className="opacity-70 text-sm">Loading powers…</div>
+      <div className="opacity-70 text-sm">Loading powersвЂ¦</div>
     </section>
   );
 
@@ -89,7 +88,7 @@ export default function UpgradePanel() {
     <section className="rounded-2xl p-4 bg-[var(--c-card)]/70 border border-white/10 space-y-3">
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-semibold">Upgrades</h3>
-        <div className="text-xs opacity-70">✨ {me.xp} · 💰 {me.creds}</div>
+        <div className="text-xs opacity-70">вњЁ {me.xp} В· рџ’° {me.creds}</div>
       </div>
 
       {err && (
@@ -105,7 +104,7 @@ export default function UpgradePanel() {
             onClick={() => void doUpgrade('hack')}
             className="px-3 py-2 rounded-xl text-sm bg-[var(--c-primary)]/80 hover:opacity-90 disabled:opacity-50"
           >
-            {busy === 'hack' ? 'Upgrading…' : 'Upgrade Hack'}
+            {busy === 'hack' ? 'UpgradingвЂ¦' : 'Upgrade Hack'}
           </button>
         </div>
 
@@ -117,14 +116,16 @@ export default function UpgradePanel() {
             onClick={() => void doUpgrade('sec')}
             className="px-3 py-2 rounded-xl text-sm bg-[var(--c-primary)]/80 hover:opacity-90 disabled:opacity-50"
           >
-            {busy === 'sec' ? 'Upgrading…' : 'Upgrade Security'}
+            {busy === 'sec' ? 'UpgradingвЂ¦' : 'Upgrade Security'}
           </button>
         </div>
       </div>
 
       <div className="text-[11px] opacity-60">
-        Upgrades cost coins and may bump your rank based on XP. You’ll see the feed log it live.
+        Upgrades cost coins and may bump your rank based on XP. YouвЂ™ll see the feed log it live.
       </div>
     </section>
   );
 }
+
+

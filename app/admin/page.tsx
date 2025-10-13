@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 export const dynamic = 'force-dynamic';
 
 import AuthGate from '@/components/AuthGate';
@@ -7,7 +7,7 @@ import { useEffect, useState } from 'react';
 
 export default function Admin() {
   const [me,setMe] = useState<{ email?:string }|null>(null);
-  const [target,setTarget]=useState(''); // user_id (uuid) or username you’ll paste
+  const [target,setTarget]=useState(''); // user_id (uuid) or username youвЂ™ll paste
   const [msg,setMsg]=useState<string|undefined>();
 
   useEffect(()=>{ (async()=>{
@@ -22,7 +22,7 @@ export default function Admin() {
     try {
       // Example: give 200 coins to target user_id
       await supabase.rpc('rpc_admin_grant_coins', { _user: target, _coins: 200 });
-      setMsg('Granted 200 coins ✅');
+      setMsg('Granted 200 coins вњ…');
     } catch(e:any){ setMsg(e.message); }
   };
 
@@ -30,7 +30,7 @@ export default function Admin() {
     setMsg(undefined);
     try {
       await supabase.rpc('rpc_admin_ban', { _user: target });
-      setMsg('User banned ✅');
+      setMsg('User banned вњ…');
     } catch(e:any){ setMsg(e.message); }
   };
 
@@ -38,7 +38,7 @@ export default function Admin() {
 
   return (
     <AuthGate>
-      <h1 className="text-xl font-semibold mb-4">Mr. Sobbi — Admin</h1>
+      <h1 className="text-xl font-semibold mb-4">Mr. Sobbi вЂ” Admin</h1>
       <div className="space-y-3">
         <input className="w-full bg-slate-900 p-2 rounded" placeholder="target user_id (uuid)" value={target} onChange={e=>setTarget(e.target.value)} />
         <div className="flex gap-2">
@@ -50,3 +50,4 @@ export default function Admin() {
     </AuthGate>
   );
 }
+

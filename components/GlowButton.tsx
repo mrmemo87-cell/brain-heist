@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 import { ButtonHTMLAttributes } from 'react';
 
 export default function GlowButton(
@@ -21,3 +21,4 @@ export default function GlowButton(
     </button>
   );
 }
+

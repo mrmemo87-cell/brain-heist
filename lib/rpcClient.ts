@@ -1,4 +1,4 @@
-import { createClient } from '@supabase/supabase-js';
+﻿import { createClient } from '@supabase/supabase-js';
 
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -20,3 +20,4 @@ export async function rpc<T = any>(fn: string, args?: Record<string, any>): Prom
   }
   return data as T;
 }
+

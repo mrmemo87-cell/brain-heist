@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { api } from '@/lib/rpc';
@@ -53,8 +53,8 @@ export default function TopBar() {
           {me ? (
             <>
               <span className="px-2 py-1 rounded-md bg-white/5">{me.username}</span>
-              <span className="px-2 py-1 rounded-md bg-amber-500/15 text-amber-300">🟡 {me.coins_balance ?? 0}c</span>
-              <span className="px-2 py-1 rounded-md bg-violet-500/15 text-violet-300">⭐ {me.xp_total ?? 0} XP</span>
+              <span className="px-2 py-1 rounded-md bg-amber-500/15 text-amber-300">рџџЎ {me.coins_balance ?? 0}c</span>
+              <span className="px-2 py-1 rounded-md bg-violet-500/15 text-violet-300">в­ђ {me.xp_total ?? 0} XP</span>
               <Link href="/logout" className="px-2 py-1 rounded-lg bg-white/10">Logout</Link>
             </>
           ) : (
@@ -67,3 +67,4 @@ export default function TopBar() {
     </div>
   );
 }
+

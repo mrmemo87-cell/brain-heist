@@ -1,4 +1,4 @@
-type Handler = (payload?: any) => void;
+﻿type Handler = (payload?: any) => void;
 const listeners: Record<string, Set<Handler>> = {};
 export const bus = {
   on(evt: string, fn: Handler) {
@@ -9,3 +9,4 @@ export const bus = {
     listeners[evt]?.forEach(fn => fn(payload));
   },
 };
+

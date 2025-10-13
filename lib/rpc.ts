@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 import { supabase } from './supabaseClient';
 
 /*
@@ -30,3 +30,4 @@ export const api = {
   upgradeHack: (steps = 1) => rpc('rpc_upgrade_hack', { _steps: steps }),
   upgradeSecurity: (steps = 1) => rpc('rpc_upgrade_security', { _steps: steps }),
 };
+
