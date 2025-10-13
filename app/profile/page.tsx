@@ -89,7 +89,6 @@ export default function ProfilePage() {
   async function incStat(stat: "hack" | "security") {
     setErr(null);
     try {
-      // Try your existing RPC; ignore if not present
       const { error } = await supabase.rpc("rpc_upgrade_stat", { stat, levels: 1 } as any);
       if (error) throw new Error(error.message);
       await load();
@@ -167,15 +166,8 @@ export default function ProfilePage() {
                 <div className="text-sm font-semibold">🔮 {e.item_key}</div>
                 <div className="text-xs opacity-80">{e.effect}</div>
                 <div className="mt-2">
-                  <ProgressBar value={Math.max(0, Math.min(100, (function pct(){
-                    if (!e.expires_at) return 100;
-                    const s = new Date(e.started_at).getTime();
-                    const x = new Date(e.expires_at).getTime();
-                    const now = Date.now(); if (now>=x) return 0;
-                    const total = Math.max(1, x - s);
-                    const left = Math.max(0, x - now);
-                    return Math.round((left / total) * 100);
-                  })())} reverse height={8}/>
+                  {/* ✅ simpler & safe */}
+                  <ProgressBar value={Math.max(0, Math.min(100, effectPct(e)))} reverse height={8} />
                 </div>
               </li>
             ))}
