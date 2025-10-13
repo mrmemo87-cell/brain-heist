@@ -47,8 +47,7 @@ begin
              using (uid = auth.uid())
              with check (uid = auth.uid())';
   end if;
-end
-$do$;
+END $$;$;
 
 do $do$
 begin
@@ -58,8 +57,7 @@ begin
   ) then
     execute 'alter publication supabase_realtime add table public.users';
   end if;
-end
-$do$;
-DO $ BEGIN
+END $$;$;
+DO $$ BEGIN
   PERFORM pg_notify(''pgrst'',''reload schema'');
 END -Raw;
