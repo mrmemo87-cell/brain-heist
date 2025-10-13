@@ -28,28 +28,49 @@ export default function ProfilePage() {
   const [effects, setEffects] = useState<ActiveEffect[]>([]);
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
   async function load() {
-    setErr(null);
+    setErr(null); setLoading(true);
     try {
       const { data: sess } = await supabase.auth.getSession();
       const uid = sess.session?.user?.id ?? null;
-      if (!uid) { setMe(null); return; }
+      if (!uid) { setMe(null); setLoading(false); return; }
 
-      const { data, error } = await supabase
-        .from("users")
-        .select("uid,xp,creds,hack_level,sec_level,bio")
-        .eq("uid", uid)
-        .maybeSingle();
-      if (error) throw new Error(error.message);
-      const row = (data as any) ?? null;
-      setMe(row);
-      setBio((row?.bio ?? localStorage.getItem("bio") ?? "") as string);
+      // 1) Try RPC (no dependency on profiles table)
+      let got: UserRow | null = null;
+      try {
+        const { data: pub, error: perr } = await supabase.rpc("rpc_profile_public", { p_uid: uid } as any);
+        if (!perr && Array.isArray(pub) && pub.length) {
+          const r: any = pub[0];
+          got = { uid: r.uid, xp: r.xp, creds: r.creds, hack_level: r.hack_level, sec_level: r.sec_level, bio: r.bio ?? null };
+        }
+      } catch { /* ignore if RPC missing */ }
 
-      const { data: eff, error: aerr } = await supabase.rpc("rpc_active_effects_for_me");
-      if (!aerr) setEffects((eff ?? []) as any);
+      // 2) Fallback to plain select WITHOUT "bio" column
+      if (!got) {
+        const { data, error } = await supabase
+          .from("users")
+          .select("uid,xp,creds,hack_level,sec_level")
+          .eq("uid", uid)
+          .maybeSingle();
+        if (error) throw new Error(error.message);
+        got = { ...(data as any), bio: null } as UserRow;
+      }
+
+      setMe(got);
+      // local fallback for bio so UI still works
+      setBio((got?.bio ?? localStorage.getItem("bio") ?? "") as string);
+
+      // Active effects (ignore if RPC is missing)
+      try {
+        const { data: eff, error: aerr } = await supabase.rpc("rpc_active_effects_for_me");
+        if (!aerr) setEffects((eff ?? []) as any);
+      } catch { /* ignore */ }
     } catch (e: any) {
       setErr(e?.message ?? "Failed to load profile");
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -71,11 +92,9 @@ export default function ProfilePage() {
       const uid = sess.session?.user?.id ?? null;
       if (!uid) throw new Error("Not signed in");
 
-      const { error } = await supabase.from("users")
-        .update({ bio })
-        .eq("uid", uid);
+      // Try to persist; if column doesn't exist, fall back to localStorage
+      const { error } = await supabase.from("users").update({ bio }).eq("uid", uid);
       if (error) {
-        // Fallback: if column doesn't exist, keep it locally
         localStorage.setItem("bio", bio);
         throw new Error("Bio saved locally (server column missing).");
       }
@@ -99,8 +118,20 @@ export default function ProfilePage() {
 
   useEffect(() => { void load(); }, []);
 
-  if (!me) {
+  if (loading) {
     return <main className="max-w-3xl mx-auto px-4 py-10">Loading…</main>;
+  }
+
+  if (err && !me) {
+    return (
+      <main className="max-w-3xl mx-auto px-4 py-10">
+        <div className="text-sm rounded-xl bg-rose-500/15 border border-rose-500/40 p-3">{err}</div>
+      </main>
+    );
+  }
+
+  if (!me) {
+    return <main className="max-w-3xl mx-auto px-4 py-10">No profile found.</main>;
   }
 
   return (
@@ -166,7 +197,6 @@ export default function ProfilePage() {
                 <div className="text-sm font-semibold">🔮 {e.item_key}</div>
                 <div className="text-xs opacity-80">{e.effect}</div>
                 <div className="mt-2">
-                  {/* ✅ simpler & safe */}
                   <ProgressBar value={Math.max(0, Math.min(100, effectPct(e)))} reverse height={8} />
                 </div>
               </li>
