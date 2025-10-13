@@ -60,6 +60,6 @@ begin
   end if;
 end
 $do$;
-DO -Raw BEGIN
+DO $ BEGIN
   PERFORM pg_notify(''pgrst'',''reload schema'');
 END -Raw;
