@@ -1,0 +1,1 @@
+﻿Wrap player names with <UserLink uid={row.uid}>name</UserLink> in app\leaderboard\page.tsx and app\activity\page.tsx so the peek opens.
