@@ -9,7 +9,7 @@ export default function NeonCard({
   className = "",
 }: {
   title?: React.ReactNode;
-  accent?: "cyan" | "purple" | "pink" | "lime" | "orange";
+  accent?: "cyan" | "lime" | "purple" | "pink" | "orange" | "mag";
   children?: React.ReactNode;
   className?: string;
 }) {
