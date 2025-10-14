@@ -1,23 +1,35 @@
-export function RadialGauge({ value=67, size=126 }: { value:number; size?:number }) {
-  const r = (size-16)/2;
-  const c = 2*Math.PI*r;
+"use client";
+import React from "react";
+
+function colorFor(v:number){
+  // 100 -> green, 50 -> yellow, 0 -> red
+  const clamp = Math.max(0, Math.min(100, v));
+  const r = clamp < 50 ? Math.round( (50-clamp)/50 * 255 ) : 0;
+  const g = clamp >= 50 ? 255 : Math.round( clamp/50 * 255 );
+  return `rgb(${r},${g},80)`;
+}
+
+export default function RadialGauge(
+  { value=0, reverse=false, size=110, stroke=10 }:{
+    value?: number; reverse?: boolean; size?: number; stroke?: number;
+  }
+){
   const pct = Math.max(0, Math.min(100, value));
-  const dash = (pct/100)*c;
+  const radius = (size - stroke) / 2;
+  const circ = 2 * Math.PI * radius;
+  const p = reverse ? (100 - pct) : pct;
+  const dash = (p/100) * circ;
+
   return (
-    <div style={{ width:size, height:size }} className="relative grid place-items-center">
-      <svg width={size} height={size} className="rotate-[-90deg]">
-        <circle cx={size/2} cy={size/2} r={r} stroke="rgba(255,255,255,.12)" strokeWidth="12" fill="none" />
-        <circle cx={size/2} cy={size/2} r={r} stroke="url(#g)" strokeWidth="12" strokeLinecap="round"
-                strokeDasharray={`${dash} ${c-dash}`} fill="none" />
-        <defs>
-          <linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%"   stopColor="#00f0ff" />
-            <stop offset="60%"  stopColor="#ff00e6" />
-            <stop offset="100%" stopColor="#aaff00" />
-          </linearGradient>
-        </defs>
-      </svg>
-      <div className="absolute text-2xl font-extrabold drop-shadow-neon">{pct}%</div>
-    </div>
+    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+      <circle cx={size/2} cy={size/2} r={radius}
+        stroke="rgba(255,255,255,.10)" strokeWidth={stroke}
+        fill="none" />
+      <circle cx={size/2} cy={size/2} r={radius}
+        stroke={colorFor(pct)} strokeWidth={stroke}
+        fill="none" strokeLinecap="round"
+        strokeDasharray={`${dash} ${circ-dash}`}
+        transform={`rotate(-90 ${size/2} ${size/2})`} />
+    </svg>
   );
 }

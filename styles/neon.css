@@ -1,0 +1,85 @@
+:root{
+  --c-bg: #05070f;
+  --c-panel: #0b1020;
+  --c-panel-2: #111836;
+  --c-text: #f4f7ff;
+  --c-muted: #a9b4d6;
+
+  --g-cyan:  0 255 255;
+  --g-lime:  120 255 120;
+  --g-pink:  255 80 180;
+  --g-purple:170 120 255;
+  --g-orange:255 170 90;
+}
+
+/* readable everywhere */
+html,body{background-color:var(--c-bg)}
+body{
+  color:var(--c-text);
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue",
+               Arial, "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif;
+}
+
+.bg-grid{
+  background-image:
+    radial-gradient(transparent 0 8px, rgba(255,255,255,.05) 8px),
+    radial-gradient(transparent 0 8px, rgba(255,255,255,.03) 8px);
+  background-size: 32px 32px, 32px 32px;
+  background-position: 0 0, 16px 16px;
+}
+
+/* Neon card */
+.neon-card{
+  background: linear-gradient(180deg, rgba(255,255,255,.02), rgba(255,255,255,.03)) , var(--c-panel);
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 16px;
+  padding: 18px;
+  box-shadow:
+    0 0 0px rgba(255,255,255,.05) inset,
+    0 10px 30px rgba(0,0,0,.35);
+  position: relative;
+}
+.neon-card::after{
+  content:"";
+  position:absolute; inset:-2px;
+  border-radius:18px;
+  pointer-events:none;
+  filter: blur(12px);
+  opacity:.55;
+}
+.neon-card[data-accent="cyan"]::after   { box-shadow:0 0 35px rgba(var(--g-cyan)/.55); }
+.neon-card[data-accent="lime"]::after   { box-shadow:0 0 35px rgba(var(--g-lime)/.55); }
+.neon-card[data-accent="pink"]::after   { box-shadow:0 0 35px rgba(var(--g-pink)/.55); }
+.neon-card[data-accent="purple"]::after { box-shadow:0 0 35px rgba(var(--g-purple)/.55); }
+.neon-card[data-accent="orange"]::after { box-shadow:0 0 35px rgba(var(--g-orange)/.55); }
+
+.neon-title{
+  letter-spacing:.04em;
+  font-weight:800;
+  text-transform:uppercase;
+  font-size:.72rem;
+  color:var(--c-muted);
+}
+
+/* Linear progress */
+.neon-bar{
+  width:100%;
+  background: rgba(255,255,255,.08);
+  border-radius: 999px;
+  overflow:hidden;
+  border:1px solid rgba(255,255,255,.10);
+}
+.neon-bar__fill{
+  height:100%;
+  transition: width .4s ease;
+  background: linear-gradient(90deg,
+    #18e21a, #d9ec25 45%, #ff7b00 70%, #ff2a6d 100%);
+  box-shadow: 0 0 16px rgba(255,255,255,.15);
+}
+
+/* Radial gauge utility colors */
+:root{
+  --g-green:#1fe41f;
+  --g-yellow:#ffee55;
+  --g-red:#ff3a66;
+}
