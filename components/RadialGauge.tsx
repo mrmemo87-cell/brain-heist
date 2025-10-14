@@ -1,35 +1,46 @@
-"use client";
-import React from "react";
+import * as React from "react";
 
-function colorFor(v:number){
-  // 100 -> green, 50 -> yellow, 0 -> red
-  const clamp = Math.max(0, Math.min(100, v));
-  const r = clamp < 50 ? Math.round( (50-clamp)/50 * 255 ) : 0;
-  const g = clamp >= 50 ? 255 : Math.round( clamp/50 * 255 );
-  return `rgb(${r},${g},80)`;
-}
+export type RadialGaugeProps = {
+  value: number;           // 0..100
+  size?: number;           // px
+  stroke?: number;         // px
+  reverse?: boolean;       // draw remaining instead of progress
+  className?: string;
+};
 
-export default function RadialGauge(
-  { value=0, reverse=false, size=110, stroke=10 }:{
-    value?: number; reverse?: boolean; size?: number; stroke?: number;
-  }
-){
-  const pct = Math.max(0, Math.min(100, value));
-  const radius = (size - stroke) / 2;
-  const circ = 2 * Math.PI * radius;
-  const p = reverse ? (100 - pct) : pct;
-  const dash = (p/100) * circ;
+function RadialGaugeComp({
+  value,
+  size = 120,
+  stroke = 10,
+  reverse = false,
+  className,
+}: RadialGaugeProps) {
+  const v = Math.max(0, Math.min(100, value ?? 0));
+  const r = (size - stroke) / 2;
+  const c = 2 * Math.PI * r;
+  const pct = reverse ? (100 - v) : v;
+  const dash = (pct / 100) * c;
 
   return (
-    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
-      <circle cx={size/2} cy={size/2} r={radius}
-        stroke="rgba(255,255,255,.10)" strokeWidth={stroke}
-        fill="none" />
-      <circle cx={size/2} cy={size/2} r={radius}
-        stroke={colorFor(pct)} strokeWidth={stroke}
-        fill="none" strokeLinecap="round"
-        strokeDasharray={`${dash} ${circ-dash}`}
-        transform={`rotate(-90 ${size/2} ${size/2})`} />
+    <svg width={size} height={size} className={className} viewBox={`0 0 ${size} ${size}`}>
+      <circle cx={size/2} cy={size/2} r={r} stroke="currentColor" strokeOpacity="0.15" strokeWidth={stroke} fill="none" />
+      <circle
+        cx={size/2} cy={size/2} r={r}
+        stroke="currentColor"
+        strokeWidth={stroke}
+        fill="none"
+        strokeDasharray={`${dash} ${c - dash}`}
+        strokeLinecap="round"
+        transform={`rotate(-90 ${size/2} ${size/2})`}
+      />
+      <text x="50%" y="50%" dominantBaseline="middle" textAnchor="middle" fontWeight="800" fontSize={size*0.22}>
+        {Math.round(v)}%
+      </text>
     </svg>
   );
 }
+
+// default export
+export default RadialGaugeComp;
+// named export for `import { RadialGauge }`
+export { RadialGaugeComp as RadialGauge };
