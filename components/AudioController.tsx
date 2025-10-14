@@ -1,20 +1,43 @@
 "use client";
-import React, {useEffect, useRef, useState} from "react";
 
-export default function AudioController(){
-  const ref = useRef<HTMLAudioElement>(null);
-  const [on, setOn] = useState<boolean>(() => localStorage.getItem("music") === "on");
-  useEffect(()=>{ const a = ref.current; if (!a) return;
-    if(on){ a.volume=.25; a.loop=true; a.play().catch(()=>{}); } else { a.pause(); }
-    localStorage.setItem("music", on?"on":"off");
-  },[on]);
+import { useEffect, useRef, useState } from "react";
+
+export default function AudioController() {
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [on, setOn] = useState(true);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const v = window.localStorage.getItem("music");
+        if (v === "off") setOn(false);
+      } catch {}
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!audioRef.current) return;
+    if (on) {
+      audioRef.current.volume = 0.25;
+      audioRef.current.play().catch(() => {});
+    } else {
+      audioRef.current.pause();
+    }
+    if (typeof window !== "undefined") {
+      try { window.localStorage.setItem("music", on ? "on" : "off"); } catch {}
+    }
+  }, [on]);
+
   return (
-    <div className="text-xs opacity-80 flex items-center gap-2">
-      <button className="px-2 py-1 rounded bg-[rgba(255,255,255,.08)] hover:bg-[rgba(255,255,255,.12)]"
-              onClick={()=>setOn(v=>!v)}>
-        {on?"🔊 Music: On":"🔇 Music: Off"}
+    <div className="fixed bottom-3 right-3 z-50">
+      <audio ref={audioRef} loop src="/bg.mp3" />
+      <button
+        onClick={() => setOn(v => !v)}
+        className="px-3 py-2 rounded-xl bg-black/70 text-white border border-white/10"
+        aria-label="toggle music"
+      >
+        {on ? "🔊 On" : "🔇 Off"}
       </button>
-      <audio ref={ref} src="/music/bg.mp3" preload="auto"/>
     </div>
   );
 }

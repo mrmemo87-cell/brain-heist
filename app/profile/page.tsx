@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import React, { useEffect, useState } from "react";
 import { supabase } from "@/lib/supa";
@@ -59,7 +59,7 @@ export default function ProfilePage() {
       }
 
       setMe(got);
-      setBio((got?.bio ?? localStorage.getItem("bio") ?? "") as string);
+      setBio((got?.bio ?? window.localStorage.getItem("bio") ?? "") as string);
 
       // Active effects
       try {
@@ -93,7 +93,7 @@ export default function ProfilePage() {
       if (!uid) throw new Error("Not signed in");
       const { error } = await supabase.from("users").update({ bio }).eq("uid", uid);
       if (error) {
-        localStorage.setItem("bio", bio);
+        window.localStorage.setItem("bio", bio);
         throw new Error("Bio saved locally (server column missing).");
       }
     } catch (e: any) {
@@ -112,7 +112,7 @@ export default function ProfilePage() {
 
   useEffect(() => { void load(); }, []);
 
-  if (loading) return <main className="bh-shell py-10">Loading…</main>;
+  if (loading) return <main className="bh-shell py-10">LoadingвЂ¦</main>;
   if (!me) return <main className="bh-shell py-10">No profile found.</main>;
 
   return (
@@ -158,13 +158,13 @@ export default function ProfilePage() {
         <textarea
           className="mt-2 w-full rounded-xl bg-[rgba(255,255,255,.06)] border border-white/10 p-3 text-sm"
           rows={3}
-          placeholder="Drop a scary line to warn hackers…"
+          placeholder="Drop a scary line to warn hackersвЂ¦"
           value={bio}
           onChange={(e) => setBio(e.target.value)}
         />
         <button onClick={() => void saveBio()} disabled={saving}
           className="mt-2 px-3 py-2 rounded-xl text-sm bg-[rgba(255,255,255,.08)] hover:bg-[rgba(255,255,255,.12)] disabled:opacity-50">
-          {saving ? "Saving…" : "Save bio"}
+          {saving ? "SavingвЂ¦" : "Save bio"}
         </button>
       </NeonCard>
 

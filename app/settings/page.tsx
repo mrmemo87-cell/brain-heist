@@ -1,55 +1,37 @@
-﻿'use client';
-import { useEffect, useState } from 'react';
+"use client";
+export const dynamic = "force-dynamic";
 
-const THEMES = [
-  { id:'cyber', name:'Cyber Neon' },
-  { id:'forest', name:'Forest Mint' },
-  { id:'rose', name:'Rose Blaze' },
-];
+import { useEffect, useState } from "react";
 
-export default function Settings() {
-  const [theme,setTheme]=useState('cyber');
-  const [music,setMusic]=useState(0.4);
-  const [sfx,setSfx]=useState(true);
+export default function SettingsPage() {
+  const [prefs, setPrefs] = useState<{ music:boolean } | null>(null);
 
-  useEffect(()=>{
-    const p = JSON.parse(localStorage.getItem('bh_prefs') ?? '{}');
-    setTheme(p.theme ?? 'cyber'); setMusic(p.music ?? 0.4); setSfx(p.sfx ?? true);
-  },[]);
-  useEffect(()=>{
-    localStorage.setItem('bh_prefs', JSON.stringify({theme,music,sfx}));
-    document.documentElement.dataset.theme = theme; // apply theme data attr
-  },[theme,music,sfx]);
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const raw = window.localStorage.getItem("prefs");
+        setPrefs(raw ? JSON.parse(raw) : { music: true });
+      } catch {
+        setPrefs({ music: true });
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    if (typeof window !== "undefined" && prefs) {
+      try { window.localStorage.setItem("prefs", JSON.stringify(prefs)); } catch {}
+    }
+  }, [prefs]);
+
+  if (!prefs) return <main className="max-w-md mx-auto px-4 py-16">Loading…</main>;
 
   return (
-    <div className="space-y-6">
-      <h1 className="h1">Settings</h1>
-
-      <div className="card p-4">
-        <div className="font-semibold mb-2">Theme</div>
-        <div className="flex gap-2">
-          {THEMES.map(t=>(
-            <button key={t.id} onClick={()=>setTheme(t.id)} className={`btn ${theme===t.id?'btn-primary':'btn-ghost'}`}>{t.name}</button>
-          ))}
-        </div>
-        <div className="text-sm text-ink-400 mt-2">More themes coming вЂ” neon cyberpunk, vaporwave, hacker grid.</div>
-      </div>
-
-      <div className="card p-4">
-        <div className="font-semibold mb-2">Audio</div>
-        <div className="flex items-center gap-3">
-          <label className="text-sm">Background music</label>
-          <input type="range" min={0} max={1} step={0.01} value={music} onChange={e=>setMusic(parseFloat(e.target.value))} />
-          <span className="text-sm text-ink-300">{Math.round(music*100)}%</span>
-        </div>
-        <div className="mt-3">
-          <label className="inline-flex items-center gap-2 text-sm">
-            <input type="checkbox" checked={sfx} onChange={e=>setSfx(e.target.checked)} />
-            Enable sound effects
-          </label>
-        </div>
-      </div>
-    </div>
+    <main className="max-w-md mx-auto px-4 py-16 space-y-4">
+      <h1 className="text-2xl font-bold">Settings</h1>
+      <label className="flex items-center gap-3">
+        <input type="checkbox" checked={prefs.music} onChange={e => setPrefs({ ...prefs, music: e.target.checked })}/>
+        <span>Background music</span>
+      </label>
+    </main>
   );
 }
-
