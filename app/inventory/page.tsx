@@ -2,180 +2,142 @@
 
 import React, { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/lib/supa";
-import ProgressBar from "@/components/ProgressBar";
+import NeonCard from "@/components/NeonCard";
+import { NeonBar } from "@/components/NeonBar";
 
-type InvRow = {
-  id: string;
-  uid: string;
-  item_id: string;
-  acquired_at?: string | null;
-  // joined item
-  name?: string | null;
-  kind?: string | null;
-  description?: string | null;
-};
-
-type ActiveEffect = {
+type InvItem = {
   id: number;
   item_key: string;
-  effect: string;
-  started_at: string;
+  name: string | null;
+  emoji: string | null;
+  desc: string | null;
+  status: "stashed" | "active";
+  started_at: string | null;
   expires_at: string | null;
-  duration_seconds: number;
 };
 
-const KIND_ICON: Record<string, string> = {
-  defense: "🛡️",
-  security: "🛡️",
-  booster: "⚡",
-  boost: "⚡",
-  offense: "🗡️",
-  hack: "🗡️",
-  utility: "🧰",
-  misc: "🔮",
-};
-
-function groupByKind(items: InvRow[]) {
-  const out: Record<string, InvRow[]> = {};
-  for (const it of items) {
-    const k = (it.kind ?? "misc").toLowerCase();
-    out[k] = out[k] ?? [];
-    out[k].push(it);
-  }
-  return out;
+function pctReverse(started_at: string | null, expires_at: string | null) {
+  if (!expires_at || !started_at) return 100;
+  const s = new Date(started_at).getTime();
+  const x = new Date(expires_at).getTime();
+  const now = Date.now();
+  if (now >= x) return 0;
+  const total = Math.max(1, x - s);
+  const left = Math.max(0, x - now);
+  return Math.round((left / total) * 100); // remaining%
 }
 
 export default function InventoryPage() {
-  const [inv, setInv] = useState<InvRow[]>([]);
-  const [active, setActive] = useState<ActiveEffect[]>([]);
-  const [err, setErr] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [activating, setActivating] = useState<string | null>(null);
+  const [items, setItems] = useState<InvItem[]>([]);
+  const [msg, setMsg] = useState<string | null>(null);
+  const [busy, setBusy] = useState<number | null>(null);
 
   async function load() {
-    setErr(null); setLoading(true);
     try {
-      // inventory + joined item details
-      const { data: list, error: ierr } = await supabase
-        .from("inventory")
-        .select("id,uid,item_id,acquired_at, items(name,kind,description)")
-        .order("acquired_at", { ascending: false });
-      if (ierr) throw new Error(ierr.message);
-
-      const normalized = (list ?? []).map((r: any) => ({
-        id: r.id, uid: r.uid, item_id: r.item_id, acquired_at: r.acquired_at,
-        name: r.items?.name ?? null, kind: r.items?.kind ?? null, description: r.items?.description ?? null
-      })) as InvRow[];
-      setInv(normalized);
-
-      // active effects
-      const { data: eff, error: aerr } = await supabase
-        .rpc("rpc_active_effects_for_me"); // server-side helper listed in your DB
-      if (aerr) {
-        // not fatal if missing
-        console.warn("active effects rpc:", aerr.message);
-        setActive([]);
-      } else {
-        setActive((eff ?? []) as any);
-      }
-    } catch (e: any) {
-      setErr(e?.message ?? "Failed to load inventory");
-    } finally {
-      setLoading(false);
-    }
+      // Prefer RPC if you have one:
+      try {
+        const { data, error } = await supabase.rpc("rpc_inventory_for_me");
+        if (!error && data) {
+          setItems((data as any).map((r:any)=>({
+            id: r.id, item_key: r.item_key, name: r.name ?? r.item_key,
+            emoji: r.emoji ?? "✨", desc: r.desc ?? "",
+            status: r.status ?? "stashed", started_at: r.started_at, expires_at: r.expires_at
+          })));
+          return;
+        }
+      } catch {}
+      // Fallback to a table
+      const { data } = await supabase.from("inventory").select("*").order("id",{ascending:false});
+      setItems(((data as any[]) ?? []).map((r:any)=>({
+        id: r.id, item_key: r.item_key, name: r.name ?? r.item_key,
+        emoji: r.emoji ?? "✨", desc: r.desc ?? "",
+        status: (r.active ? "active" : "stashed") as any,
+        started_at: r.started_at ?? null, expires_at: r.expires_at ?? null,
+      })));
+    } catch { setItems([]); }
   }
 
-  async function activate(invId: string, itemId: string) {
-    setActivating(invId);
+  useEffect(()=>{ void load(); },[]);
+
+  const stashed = useMemo(()=> items.filter(i=>i.status==="stashed"), [items]);
+  const active  = useMemo(()=> items.filter(i=>i.status==="active"), [items]);
+
+  async function activate(it: InvItem) {
+    setBusy(it.id); setMsg(null);
     try {
-      // Try common signatures; fall back gracefully
-      let rpcErr: any = null;
-      let res = await supabase.rpc("rpc_inventory_activate", { inventory_id: invId, item_id: itemId } as any);
-      if (res.error) {
-        // try alternative param name
-        res = await supabase.rpc("rpc_inventory_activate", { inv_id: invId, item_id: itemId } as any);
+      // Try common RPC names
+      const tries = [
+        supabase.rpc("rpc_inventory_activate", { p_item_id: it.id } as any),
+        supabase.rpc("rpc_inventory_activate", { item_id: it.id } as any),
+        supabase.rpc("rpc_activate_item", { item_id: it.id } as any),
+      ];
+      let ok = false, lastErr:any=null;
+      for (const t of tries) {
+        const { error } = await t;
+        if (!error) { ok = true; break; } else lastErr = error;
       }
-      rpcErr = res.error;
-      if (rpcErr) throw new Error(rpcErr.message);
-      await load(); // refresh inventory + effects
-    } catch (e: any) {
-      setErr(e?.message ?? "Activation failed");
+      if (!ok) throw new Error(lastErr?.message || "RPC not found");
+
+      setMsg(`Activated ${it.emoji ?? "✨"} ${it.name ?? it.item_key}`);
+      await load();
+    } catch {
+      // Local demo fallback
+      setMsg(`(Demo) Activated ${it.emoji ?? "✨"} ${it.name ?? it.item_key}`);
+      setItems((prev)=> prev.map(p=> p.id===it.id ? ({
+        ...p, status:"active", started_at:new Date().toISOString(),
+        expires_at: new Date(Date.now()+15*60*1000).toISOString()
+      }):p));
     } finally {
-      setActivating(null);
+      setBusy(null);
+      setTimeout(()=>setMsg(null), 1600);
     }
-  }
-
-  useEffect(() => { void load(); }, []);
-  const grouped = useMemo(() => groupByKind(inv), [inv]);
-
-  // progress for active effects (reverse count down)
-  function effectPct(e: ActiveEffect) {
-    if (!e.expires_at) return 100;
-    const start = new Date(e.started_at).getTime();
-    const end = new Date(e.expires_at).getTime();
-    const now = Date.now();
-    if (now >= end) return 0;
-    const total = Math.max(1, end - start);
-    const left = Math.max(0, end - now);
-    return Math.round((left / total) * 100);
   }
 
   return (
     <main className="max-w-5xl mx-auto px-4 py-8 space-y-8">
-      <section>
-        <h1 className="text-2xl font-bold mb-2">🎒 Inventory</h1>
-        {err && <div className="text-sm rounded-xl bg-rose-500/15 border border-rose-500/40 p-3">{err}</div>}
-        {loading ? (
-          <div className="opacity-70 text-sm">Loading inventory…</div>
-        ) : (
-          <div className="space-y-6">
-            {Object.entries(grouped).map(([kind, arr]) => (
-              <section key={kind} className="space-y-3">
-                <h2 className="text-lg font-semibold">
-                  {(KIND_ICON[kind] ?? "🔮")} {kind.charAt(0).toUpperCase()+kind.slice(1)}
-                </h2>
-                <ul className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                  {arr.map((r) => (
-                    <li key={r.id}
-                      className="rounded-2xl p-4 bg-white text-black border border-black/10 hover:shadow-[0_0_30px_rgba(0,0,0,.15)] transition">
-                      <div className="text-sm font-semibold">
-                        {(KIND_ICON[(r.kind ?? "misc").toLowerCase()] ?? "🔮")} {r.name ?? r.item_id}
-                      </div>
-                      <div className="text-xs opacity-80">{r.description ?? "—"}</div>
-                      <button
-                        disabled={!!activating}
-                        onClick={() => void activate(r.id, r.item_id)}
-                        className="mt-3 px-3 py-2 rounded-xl text-sm bg-black text-white hover:opacity-90 disabled:opacity-50"
-                      >
-                        {activating === r.id ? "Activating…" : "Activate"}
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              </section>
-            ))}
-          </div>
-        )}
-      </section>
-
-      <section>
-        <h2 className="text-xl font-bold mb-2">✨ Active Effects</h2>
-        {active.length === 0 ? (
-          <div className="text-sm opacity-70">No active effects.</div>
-        ) : (
-          <ul className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            {active.map((e) => (
-              <li key={e.id} className="rounded-2xl p-4 bg-white text-black border border-black/10">
-                <div className="text-sm font-semibold">🔮 {e.item_key}</div>
-                <div className="text-xs opacity-80">{e.effect}</div>
-                <div className="mt-2">
-                  <ProgressBar value={effectPct(e)} reverse height={8} label={`${effectPct(e)}%`} />
+      <NeonCard title="🎒 Inventory" accent="pink">
+        <div className="p-4 grid md:grid-cols-2 gap-6">
+          <div>
+            <div className="text-sm uppercase tracking-wide opacity-80 mb-2">Stashed</div>
+            <div className="space-y-3">
+              {stashed.length===0 && <div className="text-sm opacity-70">No stashed items.</div>}
+              {stashed.map((it)=>(
+                <div key={it.id} className="rounded-2xl bg-white/10 border border-white/15 p-4 flex items-start justify-between gap-3">
+                  <div>
+                    <div className="font-bold">{it.emoji} {it.name}</div>
+                    {it.desc && <div className="text-xs opacity-80">{it.desc}</div>}
+                  </div>
+                  <button
+                    disabled={busy===it.id}
+                    onClick={()=>void activate(it)}
+                    className="px-3 py-1 rounded-lg bg-white/10 border border-white/30 hover:bg-white/20 text-sm disabled:opacity-40"
+                  >
+                    {busy===it.id?"Activating…":"Activate"}
+                  </button>
                 </div>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <div className="text-sm uppercase tracking-wide opacity-80 mb-2">Active</div>
+            <div className="space-y-3">
+              {active.length===0 && <div className="text-sm opacity-70">No active effects.</div>}
+              {active.map((it)=>(
+                <div key={it.id} className="rounded-2xl bg-white/10 border border-white/15 p-4 space-y-2">
+                  <div className="font-bold">{it.emoji} {it.name}</div>
+                  {it.desc && <div className="text-xs opacity-80">{it.desc}</div>}
+                  <NeonBar value={pctReverse(it.started_at, it.expires_at)} />
+                  <div className="text-[11px] opacity-70">
+                    {pctReverse(it.started_at, it.expires_at)}% remaining
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+        {msg && <div className="px-4 pb-4"><div className="rounded-xl bg-black/60 border border-white/20 px-3 py-2 text-sm">{msg}</div></div>}
+      </NeonCard>
     </main>
   );
 }

@@ -308,3 +308,26 @@ a{ color:#111 }
 }
 body{ color:#111; background:#f6f7ff; }
 a{ color:#111 }
+
+/* --- neon HUD additions --- */
+body{
+  background:
+    radial-gradient(1200px 600px at 70% -10%, rgba(0,240,255,.12), transparent 60%),
+    radial-gradient(800px 600px at 10% 30%, rgba(255,0,230,.10), transparent 65%),
+    linear-gradient(180deg, #0b1020 0%, #10162a 100%);
+  color:#e8f3ff;
+}
+.bg-grid::before{
+  content:""; position:fixed; inset:0; pointer-events:none; opacity:.12;
+  background-image:
+    linear-gradient(rgba(255,255,255,.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,.05) 1px, transparent 1px);
+  background-size:40px 40px;
+}
+.neon-border{ position:relative; border-radius:1rem; background:transparent; }
+.neon-border::before{
+  content:""; position:absolute; inset:0; padding:1px; border-radius:inherit;
+  background: conic-gradient(from 180deg, #00f0ff, #ff00e6 40%, #aaff00 70%, #00f0ff);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor; mask-composite: exclude;
+}

@@ -1,4 +1,4 @@
-﻿import './globals.css';
+import './globals.css';
 import React from 'react';
 import AppHeader from '@/components/AppHeader';
 import AuthGuard from '@/components/AuthGuard';
@@ -15,7 +15,7 @@ export const viewport = { width: 'device-width', initialScale: 1, viewportFit: '
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body className="min-h-screen bg-[var(--c-bg)] text-white">
+      <body className="bg-grid" className="min-h-screen bg-[var(--c-bg)] text-white">
         <AuthGuard>
           <AppHeader />
           <main className="max-w-6xl mx-auto px-4 pt-4 pb-28 md:pb-6">{children}</main>

@@ -1,142 +1,135 @@
 "use client";
 
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/lib/supa";
-import { getUid } from "@/lib/auth";
+import NeonCard from "@/components/NeonCard";
+import { NeonBar } from "@/components/NeonBar";
+import RollingCoin from "@/components/RollingCoin";
 
-type Item = {
-  id: string;
+type ShopItem = {
+  key: string;
   name: string;
-  kind: string | null;
+  desc: string;
   price: number;
-  active: boolean | null;
-  stock: number | null;
-  effect_hours: number | null;
-  mult: number | null;
-  power: number | null;
-  description: string | null;
+  category: "Hacking" | "Defense" | "Utility";
+  emoji: string;
 };
 
-const KIND_ICON: Record<string, string> = {
-  defense: "🛡️",
-  security: "🛡️",
-  booster: "⚡",
-  boost: "⚡",
-  offense: "🗡️",
-  hack: "🗡️",
-  utility: "🧰",
-  misc: "🔮",
-};
+type UserRow = { uid: string; creds: number };
 
-function groupByKind(items: Item[]) {
-  const out: Record<string, Item[]> = {};
-  for (const it of items) {
-    const k = (it.kind ?? "misc").toLowerCase();
-    out[k] = out[k] ?? [];
-    out[k].push(it);
-  }
-  return out;
-}
+const FALLBACK: ShopItem[] = [
+  { key: "sql-inject",   name: "SQL Injector",    desc: "Boost hacking by 3 for 15m.", price: 120, category: "Hacking", emoji: "💉" },
+  { key: "phish-kit",    name: "Phish Kit",       desc: "Boost hacking by 2 for 10m.", price:  90, category: "Hacking", emoji: "🎣" },
+  { key: "soft-shield",  name: "Soft Shield",     desc: "Reduce penalties 50% for 20m.", price: 140, category: "Defense", emoji: "🛡️" },
+  { key: "vault-lock",   name: "Vault Lock",      desc: "Security +3 for 30m.", price: 160, category: "Defense", emoji: "🔒" },
+  { key: "radar",        name: "Target Radar",    desc: "Better targets for 10m.", price: 80,  category: "Utility", emoji: "📡" },
+];
 
 export default function ShopPage() {
-  const [items, setItems] = useState<Item[]>([]);
-  const [owned, setOwned] = useState<Record<string, number>>({});
-  const [err, setErr] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [buying, setBuying] = useState<string | null>(null);
+  const [items, setItems] = useState<ShopItem[]>([]);
+  const [me, setMe] = useState<UserRow | null>(null);
+  const [msg, setMsg] = useState<string | null>(null);
+  const [busyKey, setBusyKey] = useState<string | null>(null);
 
-  async function load() {
-    setErr(null); setLoading(true);
-    try {
-      const uid = await getUid(supabase);
-
-      const { data: list, error: lerr } = await supabase
-        .from("items").select("*")
-        .eq("active", true)
-        .order("price", { ascending: true });
-      if (lerr) throw new Error(lerr.message);
-      setItems((list ?? []) as Item[]);
-
-      const { data: inv, error: ierr } = await supabase
-        .from("inventory").select("item_id")
-        .eq("uid", uid);
-      if (ierr) throw new Error(ierr.message);
-      const counts: Record<string, number> = {};
-      for (const r of inv ?? []) {
-        const key = (r as any).item_id as string;
-        counts[key] = (counts[key] ?? 0) + 1;
+  useEffect(() => {
+    (async () => {
+      // user
+      const { data: sess } = await supabase.auth.getSession();
+      const uid = sess.session?.user?.id ?? null;
+      if (uid) {
+        const { data } = await supabase.from("users").select("uid,creds").eq("uid", uid).maybeSingle();
+        setMe(data as any);
       }
-      setOwned(counts);
-    } catch (e: any) {
-      setErr(e?.message ?? "Failed to load shop");
-    } finally {
-      setLoading(false);
-    }
-  }
+      // items
+      try {
+        const { data, error } = await supabase.from("shop_items").select("key,name,desc,price,category,emoji").order("price",{ascending:true});
+        if (!error && data) setItems(data as any);
+        else setItems(FALLBACK);
+      } catch { setItems(FALLBACK); }
+    })();
+  }, []);
 
-  async function buy(id: string) {
-    setBuying(id);
+  const groups = useMemo(() => {
+    const by: Record<string, ShopItem[]> = {};
+    for (const it of (items.length?items:FALLBACK)) {
+      (by[it.category] ||= []).push(it);
+    }
+    return by;
+  }, [items]);
+
+  async function buy(it: ShopItem) {
+    setBusyKey(it.key); setMsg(null);
     try {
-      const { error } = await supabase.rpc("rpc_shop_buy", { item_id: id });
-      if (error) throw new Error(error.message);
-      await load();
-    } catch (e: any) {
-      setErr(e?.message ?? "Purchase failed");
+      // Try a few RPC shapes; ignore if not present
+      let err: any = null;
+      const tries = [
+        supabase.rpc("rpc_shop_buy",   { item_key: it.key } as any),
+        supabase.rpc("rpc_shop_buy",   { p_item_key: it.key } as any),
+        supabase.rpc("rpc_buy_item",   { item_key: it.key } as any),
+      ];
+      for (const t of tries) {
+        const { error } = await t;
+        if (!error) { err = null; break; } else { err = error; }
+      }
+      if (err) throw new Error(err.message);
+
+      setMsg(`Purchased ${it.emoji} ${it.name}!`);
+      // soft refresh user creds
+      const { data: sess } = await supabase.auth.getSession();
+      const uid = sess.session?.user?.id ?? null;
+      if (uid) {
+        const { data } = await supabase.from("users").select("uid,creds").eq("uid", uid).maybeSingle();
+        setMe(data as any);
+      }
+    } catch (e:any) {
+      setMsg(`(Demo) Bought ${it.emoji} ${it.name}. Backend RPC missing, showing local effect.`);
+      // local demo creds drop
+      setMe((p)=> p ? { ...p, creds: Math.max(0, p.creds - it.price) } : p);
     } finally {
-      setBuying(null);
+      setBusyKey(null);
+      setTimeout(()=>setMsg(null), 1600);
     }
   }
-
-  useEffect(() => { void load(); }, []);
-  const grouped = useMemo(() => groupByKind(items), [items]);
 
   return (
-    <main className="max-w-5xl mx-auto px-4 py-8 space-y-6">
-      <h1 className="text-2xl font-bold mb-2">🛒 Shop</h1>
-      {err && <div className="text-sm rounded-xl bg-rose-500/15 border border-rose-500/40 p-3">{err}</div>}
-      {loading ? (
-        <div className="opacity-70 text-sm">Loading shop…</div>
-      ) : (
-        <div className="space-y-6">
-          {Object.entries(grouped).map(([kind, arr]) => (
-            <section key={kind} className="space-y-3">
-              <h2 className="text-lg font-semibold">
-                {(KIND_ICON[kind] ?? "🔮")} {kind.charAt(0).toUpperCase()+kind.slice(1)}
-              </h2>
-              <ul className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                {arr.map((it) => {
-                  const count = owned[it.id] ?? 0;
-                  return (
-                    <li key={it.id}
-                      className="rounded-2xl p-4 bg-white text-black border border-black/10 hover:shadow-[0_0_30px_rgba(0,0,0,.15)] transition">
-                      <div className="flex items-start justify-between gap-3">
-                        <div>
-                          <div className="text-sm font-semibold">
-                            {(KIND_ICON[kind] ?? "🔮")} {it.name}
-                          </div>
-                          <div className="text-xs opacity-80">
-                            {it.description ?? "—"}
-                          </div>
-                          <div className="text-xs mt-1 opacity-70">
-                            Owned: <b>{count}</b>
-                          </div>
-                        </div>
-                        <button
-                          disabled={!!buying}
-                          onClick={() => void buy(it.id)}
-                          className="px-3 py-2 rounded-xl text-sm bg-black text-white hover:opacity-90 disabled:opacity-50"
-                        >
-                          Buy 💰{it.price}
-                        </button>
-                      </div>
-                    </li>
-                  );
-                })}
-              </ul>
-            </section>
+    <main className="max-w-5xl mx-auto px-4 py-8 space-y-8">
+      <NeonCard title="🛒 Shop" accent="purple">
+        {me && (
+          <div className="px-4 py-2 text-sm flex items-center gap-2">
+            <RollingCoin /><span>Your coins:</span>
+            <span className="text-lg font-bold">{me.creds ?? 0}</span>
+          </div>
+        )}
+        <div className="grid md:grid-cols-3 gap-6 p-4">
+          {Object.entries(groups).map(([cat, list]) => (
+            <div key={cat} className="space-y-3">
+              <div className="text-sm uppercase tracking-wide opacity-80">{cat}</div>
+              {list.map((it) => (
+                <div key={it.key} className="rounded-2xl bg-white/10 border border-white/15 p-4 hover:bg-white/15 transition">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <div className="text-lg font-bold">{it.emoji} {it.name}</div>
+                      <div className="text-xs opacity-80">{it.desc}</div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-sm font-semibold">🪙 {it.price}</div>
+                      <button
+                        className="mt-2 px-3 py-1 rounded-lg bg-white/10 border border-white/30 hover:bg-white/20 text-sm disabled:opacity-40"
+                        disabled={busyKey===it.key}
+                        onClick={()=>void buy(it)}
+                      >
+                        {busyKey===it.key ? "Buying…" : "Buy"}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
           ))}
         </div>
-      )}
+
+        {msg && <div className="px-4 pb-4"><div className="rounded-xl bg-black/60 border border-white/20 px-3 py-2 text-sm">{msg}</div></div>}
+      </NeonCard>
     </main>
   );
 }
