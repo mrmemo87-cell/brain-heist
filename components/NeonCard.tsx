@@ -13,13 +13,13 @@ export default function NeonCard({
   children?: React.ReactNode;
   className?: string;
 }) {
-  const glow =
-    accent === "purple" ? "shadow-[0_0_30px_rgba(168,85,247,0.45)] border-purple-400/60"
-  : accent === "pink"   ? "shadow-[0_0_30px_rgba(236,72,153,0.45)] border-pink-400/60"
-  : accent === "lime"   ? "shadow-[0_0_30px_rgba(132,204,22,0.45)] border-lime-400/60"
-  : accent === "orange" ? "shadow-[0_0_30px_rgba(251,146,60,0.45)] border-orange-400/60"
-                        : "shadow-[0_0_30px_rgba(34,211,238,0.45)] border-cyan-400/60";
-
+  const accents =
+  cyan: "from-cyan-400 to-cyan-600",
+  lime: "from-lime-400 to-lime-600",
+  purple: "from-purple-400 to-purple-600",
+  pink: "from-pink-400 to-pink-600",
+  orange: "from-orange-400 to-orange-600",
+  mag: "from-fuchsia-400 to-pink-600", // 💖 magenta gradient
   return (
     <section className={`rounded-3xl bg-white/[0.04] backdrop-blur-md border ${glow} overflow-hidden ${className}`}>
       {title && (
