@@ -1,49 +1,41 @@
+"use client";
 import React from "react";
 
-type Props = {
-  value: number;          // 0..100
-  size?: number;          // px
-  reverse?: boolean;      // if true, visually conveys "counting down"
-  label?: string;
-};
+type Props = { value: number; size?: number; stroke?: number; reverse?: boolean };
 
-function hueFor(v: number){ // green(120) -> yellow(55) -> red(0)
-  if (v >= 66) return 120;        // green
-  if (v >= 33) return 55;         // yellow
-  return 0;                       // red
-}
-
-export function RadialGauge({ value, size=110, reverse=false, label }: Props){
-  const v = Math.max(0, Math.min(100, value));
-  const show = reverse ? v : v;   // keep %; "reverse" is only a semantic hint here
-  const r = 48, c = 2*Math.PI*r, off = c*(1 - show/100);
-  const hue = hueFor(show);
-  const color = `hsl(${hue} 90% 55%)`;
-  const glow  = `0 0 12px hsl(${hue} 90% 45% / .55)`;
-
+export default function RadialGauge({ value, size = 120, stroke = 12, reverse = false }: Props) {
+  const v = Math.max(0, Math.min(100, Math.round(value)));
+  const radius = (size - stroke) / 2;
+  const circumference = 2 * Math.PI * radius;
+  const offset = circumference * (1 - v / 100);
+  const gradId = "g1";
+  // gradient stops: green -> yellow -> red
   return (
-    <div style={{filter:"saturate(1.15)"}}>
-      <svg width={size} height={size} viewBox="0 0 120 120">
-        <defs>
-          <filter id="rg-glow">
-            <feGaussianBlur stdDeviation="2.5" result="blur"/>
-            <feMerge>
-              <feMergeNode in="blur"/>
-              <feMergeNode in="SourceGraphic"/>
-            </feMerge>
-          </filter>
-        </defs>
-        <circle cx="60" cy="60" r={r} stroke="rgba(255,255,255,.12)" strokeWidth="10" fill="none"/>
-        <circle cx="60" cy="60" r={r}
-          stroke={color} strokeWidth="10" fill="none"
-          strokeDasharray={`${c} ${c}`} strokeDashoffset={off} strokeLinecap="round"
-          transform="rotate(-90 60 60)" filter="url(#rg-glow)" />
-        <text x="60" y="65" textAnchor="middle" fontSize="20" fill="#e8f0ff" fontWeight="800">
-          {show}%
-        </text>
-      </svg>
-      {label && <div style={{marginTop:6, fontSize:12, opacity:.8, textAlign:"center"}}>{label}</div>}
-    </div>
+    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="block">
+      <defs>
+        <linearGradient id={gradId} x1="0" x2="1">
+          <stop offset="0%" stopColor="#10b981" />
+          <stop offset="60%" stopColor="#facc15" />
+          <stop offset="100%" stopColor="#f43f5e" />
+        </linearGradient>
+      </defs>
+
+      <g transform={`translate(${size / 2}, ${size / 2})`}>
+        <circle r={radius} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth={stroke} />
+        <g transform={reverse ? "scale(-1,1)" : "scale(1,1)"}>
+          <circle
+            r={radius}
+            fill="none"
+            stroke={`url(#${gradId})`}
+            strokeWidth={stroke}
+            strokeLinecap="round"
+            strokeDasharray={`${circumference}`}
+            strokeDashoffset={offset}
+            style={{ transition: "stroke-dashoffset 700ms ease" }}
+          />
+        </g>
+        <text x="0" y="6" textAnchor="middle" fontSize="18" fontWeight={700} fill="white">{v}%</text>
+      </g>
+    </svg>
   );
 }
-export default RadialGauge;

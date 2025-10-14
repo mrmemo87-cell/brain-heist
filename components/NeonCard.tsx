@@ -1,42 +1,27 @@
-import React from "react";
+"use client";
+import React, { ReactNode } from "react";
 
-export type Accent = "cyan" | "lime" | "purple" | "pink" | "orange";
-const accentToShadow: Record<Accent,string> = {
-  cyan:   "0 0 0 1px rgba(0,255,255,.25), 0 0 20px rgba(0,255,255,.18)",
-  lime:   "0 0 0 1px rgba(170,255,0,.25), 0 0 20px rgba(170,255,0,.18)",
-  purple: "0 0 0 1px rgba(150,120,255,.25), 0 0 20px rgba(150,120,255,.18)",
-  pink:   "0 0 0 1px rgba(255, 80,180,.25), 0 0 20px rgba(255, 80,180,.18)",
-  orange: "0 0 0 1px rgba(255,170, 40,.25), 0 0 20px rgba(255,170, 40,.18)",
-};
+export type Accent = "cyan" | "lime" | "purple" | "pink" | "orange" | "mag";
 
-type Props = {
+export default function NeonCard({ title, accent = "cyan", children, className = "" }: {
   title?: string;
-  subtitle?: string;
   accent?: Accent;
   className?: string;
-  children: React.ReactNode;
-};
+  children: ReactNode;
+}) {
+  const ring = {
+    cyan: "ring-cyan-400/30",
+    lime: "ring-lime-400/25",
+    purple: "ring-purple-400/25",
+    pink: "ring-pink-400/25",
+    orange: "ring-orange-400/25",
+    mag: "ring-pink-500/25",
+  }[accent || "cyan"];
 
-export default function NeonCard({ title, subtitle, accent="cyan", className="", children }: Props){
-  const ring = accentToShadow[accent];
   return (
-    <section
-      className={`neon-card ${className}`}
-      style={{
-        boxShadow: ring,
-        background: "linear-gradient(180deg, #1b2230, #151b24)",
-        border: "1px solid rgba(255,255,255,.08)",
-        borderRadius: 16,
-        padding: 16
-      }}
-    >
-      {(title || subtitle) && (
-        <div className="flex items-baseline justify-between mb-2">
-          {title && <h3 className="text-sm font-semibold">{title}</h3>}
-          {subtitle && <div className="text-[11px] opacity-70">{subtitle}</div>}
-        </div>
-      )}
-      {children}
-    </section>
+    <div className={`rounded-2xl p-4 bg-[rgba(255,255,255,0.02)] border border-white/6 ${ring} ${className}`}>
+      {title && <div className="text-xs font-semibold uppercase opacity-90 mb-2">{title}</div>}
+      <div>{children}</div>
+    </div>
   );
 }
