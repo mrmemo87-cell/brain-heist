@@ -1,42 +1,26 @@
 :root{
   --c-bg:#0c0f13;
   --c-surface:#1a1f27;
-  --c-card:#222a35;
   --c-text:#e8f0ff;
-  --c-muted:#a9b6c7;
-  --ring:0 0 0 2px rgba(0,255,255,.25), 0 0 20px rgba(0,255,255,.15);
-  --font-ui: system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans","Helvetica Neue",
-             "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif;
+  --c-muted:#b7c3d3;
 }
-
-/* background dots + gradient */
 body.bg-grid{
   background: radial-gradient(#161b22 1px, transparent 1px) 0 0/18px 18px,
               linear-gradient(180deg, #0b0e13 0%, #0f1520 40%, #0b0e13 100%);
   color: var(--c-text);
-  font-family: var(--font-ui);
+  font-family: system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans","Helvetica Neue",
+               "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif;
   -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility;
 }
-
-/* layout */
-.bh-header{ position: sticky; top:0; z-index:50; backdrop-filter:saturate(1.2) blur(8px);
+.bh-header{ position:sticky; top:0; z-index:50; backdrop-filter:saturate(1.2) blur(8px);
   background: linear-gradient(180deg, rgba(15,21,32,.85), rgba(15,21,32,.65));
   border-bottom:1px solid rgba(255,255,255,.06);
 }
-.bh-shell{ max-width:1100px; margin-inline:auto; padding:12px 20px; }
-.bh-logo{ font-weight:800; letter-spacing:.3px; }
+.bh-shell{ max-width:1100px; margin-inline:auto; padding:0 20px; }
+.bh-logo{ font-weight:900; letter-spacing:.3px; filter: drop-shadow(0 0 10px rgba(0,255,255,.25)); }
 .bh-nav{ display:flex; gap:16px; flex-wrap:wrap; }
-.bh-nav a{ color:var(--c-muted); text-decoration:none; font-weight:600; }
+.bh-nav a{ color:var(--c-muted); text-decoration:none; font-weight:700; }
 .bh-nav a:hover{ color:var(--c-text); text-shadow:0 0 8px rgba(0,255,255,.35); }
 .bh-main{ padding:28px 0 60px; }
-
-/* generic card helper (use on pages that need contrast) */
-.card{
-  background: linear-gradient(180deg, #1b2230, #151b24);
-  border:1px solid rgba(255,255,255,.07);
-  border-radius:16px; padding:16px;
-  box-shadow: 0 0 0 1px rgba(0,255,255,.06), 0 10px 30px rgba(0,0,0,.35);
-}
-
-/* make sure emoji render properly across OS */
-.emoji{ font-family: "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji", var(--font-ui); }
+.emoji{ font-family:"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji", system-ui,sans-serif; }
+.neon-card{ color:var(--c-text); }

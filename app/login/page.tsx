@@ -1,30 +1,27 @@
-﻿import React from 'react';
-import LoginClient from './LoginClient';
+"use client";
+import React from "react";
+import NeonCard from "@/components/NeonCard";
+import { supabase } from "@/lib/supa";
 
-export const metadata = { title: 'Login В· Brain Heist' };
-
-export default function Page() {
+export default function LoginPage(){
+  async function demo(){
+    // TODO: your real sign-in method
+    const email = prompt("Enter demo email (existing user)","");
+    if(!email) return;
+    await supabase.auth.signInWithOtp({ email });
+    alert("Check your email for a magic link.");
+  }
   return (
-    <div className="relative min-h-[calc(100vh-56px)] grid place-items-center overflow-hidden">
-      {/* BG image (your art) вЂ” put something at /public/assets/ui/login-bg.jpg */}
-      <div className="absolute inset-0 -z-10 bg-[radial-gradient(1200px_600px_at_50%_-200px,rgba(126,255,202,.35),transparent_60%)]" />
-      <div className="absolute inset-0 -z-20 bg-[url('/assets/ui/login-bg.jpg')] bg-cover bg-center opacity-[.16]" />
-      {/* cyber grid */}
-      <div className="absolute inset-0 -z-30 bg-[linear-gradient(transparent_23px,rgba(255,255,255,.06)_24px),linear-gradient(90deg,transparent_23px,rgba(255,255,255,.06)_24px)] bg-[size:24px_24px]" />
-      {/* scanline */}
-      <div className="absolute inset-0 pointer-events-none mix-blend-soft-light bg-[repeating-linear-gradient(transparent,transparent_2px,rgba(0,0,0,.25)_3px)]" />
-
-      <div className="w-full max-w-[420px] p-4">
-        <div className="text-center mb-6">
-          <div className="text-3xl font-extrabold tracking-wider">
-            <span className="bh-glitch">BRAIN&nbsp;HEIST</span>
-          </div>
-          <div className="text-xs opacity-80 mt-1">Become a hacker. Beat the leaderboard.</div>
-        </div>
-
-        <LoginClient />
+    <div className="grid place-items-center min-h-[60vh]">
+      <div className="max-w-md w-full">
+        <NeonCard title="Welcome back" subtitle="Access Brain Heist" accent="cyan">
+          <p className="opacity-80">Log in to continue. New look. Neon vibes. 🔐</p>
+          <button onClick={demo}
+            className="mt-4 px-4 py-2 rounded font-semibold bg-[rgba(255,255,255,.08)] hover:bg-[rgba(255,255,255,.12)]">
+            Continue with email
+          </button>
+        </NeonCard>
       </div>
     </div>
   );
 }
-

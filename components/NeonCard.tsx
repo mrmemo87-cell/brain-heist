@@ -1,46 +1,42 @@
-import * as React from "react";
+import React from "react";
 
-type Accent = "cyan" | "lime" | "purple" | "pink" | "orange";
+export type Accent = "cyan" | "lime" | "purple" | "pink" | "orange";
+const accentToShadow: Record<Accent,string> = {
+  cyan:   "0 0 0 1px rgba(0,255,255,.25), 0 0 20px rgba(0,255,255,.18)",
+  lime:   "0 0 0 1px rgba(170,255,0,.25), 0 0 20px rgba(170,255,0,.18)",
+  purple: "0 0 0 1px rgba(150,120,255,.25), 0 0 20px rgba(150,120,255,.18)",
+  pink:   "0 0 0 1px rgba(255, 80,180,.25), 0 0 20px rgba(255, 80,180,.18)",
+  orange: "0 0 0 1px rgba(255,170, 40,.25), 0 0 20px rgba(255,170, 40,.18)",
+};
 
-interface NeonCardProps {
+type Props = {
   title?: string;
-  subtitle?: string;       // <-- new
+  subtitle?: string;
   accent?: Accent;
   className?: string;
   children: React.ReactNode;
-}
+};
 
-export default function NeonCard({
-  title,
-  subtitle,                // <-- new
-  accent = "cyan",
-  className,
-  children,
-}: NeonCardProps) {
-  const glow =
-    accent === "lime"
-      ? "shadow-[0_0_24px_theme(colors.lime.500/60%)] ring-1 ring-lime-500/30"
-      : accent === "purple"
-      ? "shadow-[0_0_24px_theme(colors.purple.500/60%)] ring-1 ring-purple-500/30"
-      : accent === "pink"
-      ? "shadow-[0_0_24px_theme(colors.pink.500/60%)] ring-1 ring-pink-500/30"
-      : accent === "orange"
-      ? "shadow-[0_0_24px_theme(colors.orange.500/60%)] ring-1 ring-orange-500/30"
-      : "shadow-[0_0_24px_theme(colors.cyan.500/60%)] ring-1 ring-cyan-500/30";
-
+export default function NeonCard({ title, subtitle, accent="cyan", className="", children }: Props){
+  const ring = accentToShadow[accent];
   return (
-    <div
-      className={[
-        "rounded-2xl p-4 bg-[var(--c-card)]/90 border border-white/10",
-        "backdrop-blur transition-all duration-500",
-        "hover:translate-y-[-1px] hover:scale-[1.01]",
-        glow,
-        className ?? ""
-      ].join(" ")}
+    <section
+      className={`neon-card ${className}`}
+      style={{
+        boxShadow: ring,
+        background: "linear-gradient(180deg, #1b2230, #151b24)",
+        border: "1px solid rgba(255,255,255,.08)",
+        borderRadius: 16,
+        padding: 16
+      }}
     >
-      {title && <div className="text-white/90 text-lg font-bold">{title}</div>}
-      {subtitle && <div className="text-white/50 text-xs mb-2">{subtitle}</div>}
+      {(title || subtitle) && (
+        <div className="flex items-baseline justify-between mb-2">
+          {title && <h3 className="text-sm font-semibold">{title}</h3>}
+          {subtitle && <div className="text-[11px] opacity-70">{subtitle}</div>}
+        </div>
+      )}
       {children}
-    </div>
+    </section>
   );
 }

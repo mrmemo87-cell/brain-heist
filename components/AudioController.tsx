@@ -1,33 +1,20 @@
 "use client";
-import React from "react";
+import React, {useEffect, useRef, useState} from "react";
 
 export default function AudioController(){
-  const [playing,setPlaying] = React.useState(false);
-  const ref = React.useRef<HTMLAudioElement>(null);
-
-  React.useEffect(()=>{ // try resume if user navigates back
-    ref.current?.pause();
-    setPlaying(false);
-  },[]);
-
-  async function toggle(){
-    try{
-      if(!ref.current) return;
-      if(playing){ ref.current.pause(); setPlaying(false); }
-      else { await ref.current.play(); setPlaying(true); }
-    }catch{ /* ignore */ }
-  }
-
+  const ref = useRef<HTMLAudioElement>(null);
+  const [on, setOn] = useState<boolean>(() => localStorage.getItem("music") === "on");
+  useEffect(()=>{ const a = ref.current; if (!a) return;
+    if(on){ a.volume=.25; a.loop=true; a.play().catch(()=>{}); } else { a.pause(); }
+    localStorage.setItem("music", on?"on":"off");
+  },[on]);
   return (
-    <div className="fixed bottom-4 right-4 z-50">
-      <audio ref={ref} src="/sounds/bg.mp3" loop />
-      <button
-        onClick={toggle}
-        className="px-3 py-1 rounded-full text-xs font-semibold
-                   bg-white/10 hover:bg-white/20 border border-white/20 backdrop-blur
-                   shadow-[0_0_18px_rgba(0,255,255,.25)]">
-        {playing ? "🔊 Music: On" : "🔇 Music: Off"}
+    <div className="text-xs opacity-80 flex items-center gap-2">
+      <button className="px-2 py-1 rounded bg-[rgba(255,255,255,.08)] hover:bg-[rgba(255,255,255,.12)]"
+              onClick={()=>setOn(v=>!v)}>
+        {on?"🔊 Music: On":"🔇 Music: Off"}
       </button>
+      <audio ref={ref} src="/music/bg.mp3" preload="auto"/>
     </div>
   );
 }
