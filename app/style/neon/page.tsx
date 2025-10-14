@@ -11,11 +11,11 @@ export default function NeonDemo(){
       </div>
 
       <div className="flex flex-wrap gap-3">
-        <NeonCard><div className="text-xs opacity-80">LEVEL 7 В· <span className="text-cyan">THE NETRUNNER</span></div>
+        <NeonCard><div className="text-xs opacity-80">LEVEL 7 Р’В· <span className="text-cyan">THE NETRUNNER</span></div>
           <div className="mt-1 text-2xl font-extrabold drop-shadow-neon">BRAIN HEIST</div></NeonCard>
         <NeonCard accent="lime"><div className="text-xs opacity-80">CREDITS</div>
           <div className="mt-1 text-2xl font-extrabold">1,250</div></NeonCard>
-        <NeonCard accent="mag"><div className="text-xs opacity-80">XP</div>
+        <NeonCard accent="pink"><div className="text-xs opacity-80">XP</div>
           <div className="mt-1 text-2xl font-extrabold">3,500 / 5,000</div></NeonCard>
       </div>
 
