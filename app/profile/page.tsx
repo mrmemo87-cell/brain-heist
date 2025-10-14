@@ -102,7 +102,7 @@ export default function ProfilePage() {
     setTimeout(() => void load(), 900);
   }
 
-  if (loading) return <main className="max-w-3xl mx-auto px-4 py-10">Loading…</main>;
+  if (loading) return <main className="max-w-3xl mx-auto px-4 py-10">LoadingвЂ¦</main>;
   if (!me) return <main className="max-w-3xl mx-auto px-4 py-10">No profile found.</main>;
 
   return (
@@ -123,7 +123,7 @@ export default function ProfilePage() {
         <div className="col-span-2 grid gap-4">
           <div className="grid md:grid-cols-3 gap-6">
             <NeonCard title="XP" accent="lime"><div className="text-2xl font-extrabold">{me.xp.toLocaleString()}</div></NeonCard>
-            <NeonCard title="CREDITS" accent="mag"><div className="text-2xl font-extrabold">{me.creds.toLocaleString()}</div></NeonCard>
+            <NeonCard title="CREDITS" accent="pink"><div className="text-2xl font-extrabold">{me.creds.toLocaleString()}</div></NeonCard>
             <NeonCard title="SECURITY LEVEL" accent="cyan">
               <div className="grid place-items-center">
                 <RadialGauge value={Math.min(100, me.sec_level)} reverse />
@@ -140,7 +140,7 @@ export default function ProfilePage() {
                 </div>
                 <button onClick={() => void doHack()}
                   className={`px-3 py-2 rounded-md text-sm font-bold shadow-neon hover:brightness-105 transition-transform ${hackingAnim ? "animate-hack-glitch" : "bg-gradient-to-r from-pink-500 to-purple-500 text-white"}`}>
-                  😈 Hack
+                  рџ€ Hack
                 </button>
               </div>
             </NeonCard>
@@ -154,7 +154,7 @@ export default function ProfilePage() {
                     <li key={e.id} className="rounded-xl p-3 bg-[rgba(255,255,255,0.02)] border border-white/6">
                       <div className="flex justify-between items-center">
                         <div>
-                          <div className="text-sm font-semibold">🔮 {e.item_key}</div>
+                          <div className="text-sm font-semibold">рџ”® {e.item_key}</div>
                           <div className="text-xs opacity-80">{e.effect}</div>
                         </div>
                         <div style={{width:160}}>
@@ -168,7 +168,7 @@ export default function ProfilePage() {
             </NeonCard>
           </div>
 
-          <NeonCard title="Bio" accent="mag">
+          <NeonCard title="Bio" accent="pink">
             <textarea className="w-full rounded-md p-3 bg-[rgba(255,255,255,0.01)] border border-white/6" rows={3} value={bio} onChange={(e)=>setBio(e.target.value)} />
             <div className="mt-3">
               <button className="px-4 py-2 rounded-xl bg-gradient-to-r from-cyan-400 to-blue-600 text-white font-semibold">Save bio</button>
