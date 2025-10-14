@@ -1,16 +1,21 @@
 "use client";
-export default function NeonAvatar(
-  { size=64, className="" }:{ size?: number; className?: string }
-){
+
+export default function NeonAvatar() {
   return (
-    <div
-      className={className}
-      style={{
-        width:size, height:size, borderRadius:"50%",
-        background:"linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.02))",
-        border:"1px solid rgba(255,255,255,.2)",
-        boxShadow:"0 0 24px rgba(0,255,255,.35), inset 0 0 20px rgba(255,255,255,.06)"
-      }}
-    />
+    <div className="na-wrap">
+      <div className="na-tilt">
+        <div className="na-core">
+          <div className="na-ring na-ring-1" />
+          <div className="na-ring na-ring-2" />
+          <div className="na-ring na-ring-3" />
+          <div className="na-chip" />
+          <div className="na-face">
+            <div className="na-eye na-eye-l" />
+            <div className="na-eye na-eye-r" />
+            <div className="na-smile" />
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }
