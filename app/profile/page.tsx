@@ -121,7 +121,7 @@ export default function ProfilePage() {
       {/* top summary */}
       <div className="grid md:grid-cols-3 gap-6">
         <NeonCard accent="lime"><div className="text-xs opacity-80">XP</div><div className="mt-1 text-2xl font-extrabold">{me.xp.toLocaleString()}</div></NeonCard>
-        <NeonCard accent="mag">
+        <NeonCard accent="pink">
           <div className="flex items-center justify-between">
             <div>
               <div className="text-xs opacity-80">CREDITS</div>
