@@ -1,9 +1,9 @@
--- rpc_profile_public: show public info from public.users + auth.users email
+-- 20251013123051_rpc_profile_public.sql (no users.bio dependency)
 create or replace function public.rpc_profile_public(p_uid uuid)
 returns table (
   uid uuid,
   name text,
-  bio text,
+  bio  text,
   rank int,
   xp int,
   creds int,
@@ -13,7 +13,7 @@ returns table (
 language sql
 security definer
 set search_path = public, auth
-as }
+as $$
   select
     u.uid,
     coalesce(split_part(au.email, '@', 1), 'player') as name,
@@ -23,10 +23,7 @@ as }
   left join auth.users au on au.id = u.uid
   where u.uid = p_uid
   limit 1;
-};
+$$;
 
 revoke all on function public.rpc_profile_public(uuid) from public;
 grant execute on function public.rpc_profile_public(uuid) to anon, authenticated;
-
--- reload PostgREST schema
-notify pgrst, 'reload schema';

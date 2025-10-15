@@ -1,53 +1,44 @@
--- ensure we own the signature to avoid 42P13 (return type mismatch)
-drop function if exists public.rpc_inc_user_stats(integer, integer);
+-- fix users RLS + self policies (dynamic PK)
+DO $pol$
+DECLARE
+  pkcol text;
+BEGIN
+  -- detect single-column PK of public.users
+  SELECT a.attname INTO pkcol
+  FROM   pg_index i
+  JOIN   pg_class c ON c.oid = i.indrelid
+  JOIN   pg_attribute a ON a.attrelid = c.oid AND a.attnum = ANY(i.indkey)
+  WHERE  c.relname = 'users'
+    AND  c.relnamespace = 'public'::regnamespace
+    AND  i.indisprimary
+  GROUP BY a.attname
+  HAVING count(*) = 1
+  LIMIT 1;
 
-create function public.rpc_inc_user_stats(
-  p_xp_delta integer default 0,
-  p_creds_delta integer default 0
-)
-returns void
-language plpgsql
-security definer
-set search_path = public, auth
-as $
-declare
-  v_uid uuid;
-begin
-  select auth.uid() into v_uid;
-  if v_uid is null then
-    raise exception 'auth.uid() is null' using errcode = '42501';
-  end if;
+  IF pkcol IS NULL THEN
+    RAISE EXCEPTION 'public.users must have a single-column primary key';
+  END IF;
 
-  update public.users
-  set xp    = greatest(0, coalesce(xp,0)    + p_xp_delta),
-      creds = greatest(0, coalesce(creds,0) + p_creds_delta)
-  where uid = v_uid;
-end;
-$;
+  -- enable RLS (no-op if already)
+  BEGIN
+    EXECUTE 'ALTER TABLE public.users ENABLE ROW LEVEL SECURITY';
+  EXCEPTION WHEN others THEN NULL;
+  END;
 
--- create a self-select policy only if it doesn't exist (use different dollar tag)
-do $
-begin
-  if not exists (
-    select 1 from pg_policies
-    where schemaname='public' and tablename='users' and policyname='users self select'
-  ) then
-    execute 'create policy "users self select" on public.users for select using (auth.uid() = uid)';
-  end if;
-end
-$;
+  -- drop any old/broken versions (names seen in your history)
+  BEGIN EXECUTE 'DROP POLICY "users self select" ON public.users'; EXCEPTION WHEN others THEN NULL; END;
+  BEGIN EXECUTE 'DROP POLICY "users self update self fields" ON public.users'; EXCEPTION WHEN others THEN NULL; END;
 
--- realtime publication guard
-do $
-begin
-  if not exists (
-    select 1 from pg_publication_tables
-    where pubname='supabase_realtime' and schemaname='public' and tablename='users'
-  ) then
-    alter publication supabase_realtime add table public.users;
-  end if;
-end
-$;
+  -- create fresh policies (no TO clause)
+  EXECUTE format(
+    'CREATE POLICY "users self select" ON public.users FOR SELECT USING (auth.uid() = %I)',
+    pkcol
+  );
+  EXECUTE format(
+    'CREATE POLICY "users self update self fields" ON public.users FOR UPDATE USING (auth.uid() = %I) WITH CHECK (auth.uid() = %I)',
+    pkcol, pkcol
+  );
 
--- reload PostgREST schema
-notify pgrst, 'reload schema';
+  RAISE NOTICE 'Users RLS policies re-created using PK column: %', pkcol;
+END
+$pol$;

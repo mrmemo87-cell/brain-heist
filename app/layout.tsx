@@ -13,4 +13,4 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </body>
     </html>
   );
-}
+}import '@fontsource/noto-color-emoji';

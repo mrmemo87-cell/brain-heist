@@ -1,54 +1,65 @@
-﻿'use client';
+﻿import React, { useState } from "react";
+import { rpcHackAttempt, rpcHackEmulate } from "@/lib/api";
 
-import React, { useState } from 'react';
-import { supabase } from '@/lib/supa';
-import { useAudio } from '@/components/AudioProvider';
-
-type Props = {
-  // primary new prop:
-  defenderUid?: string;
-  // legacy alias so older components still compile:
-  defenderId?: string;
-  className?: string;
-  onAfter?: () => void;
-};
-
-export default function HackButton({ defenderUid, defenderId, className = '', onAfter }: Props) {
-  const supa = supabase;
-  const sfx = useAudio();
+export default function HackButton({ target }: { target: string }) {
   const [loading, setLoading] = useState(false);
+  const [preview, setPreview] = useState<any|null>(null);
+  const [result, setResult] = useState<any|null>(null);
+  const [err, setErr] = useState<string|null>(null);
 
-  const def = defenderUid ?? defenderId ?? '';
+  async function previewHack() {
+    setErr(null);
+    try {
+      const p = await rpcHackEmulate(target);
+      setPreview(p);
+    } catch (e:any) {
+      setErr(e.message || String(e));
+    }
+  }
 
-  async function onHack() {
-    if (!def || loading) return;
+  async function doHack() {
+    setErr(null);
     setLoading(true);
     try {
-      const { data, error } = await supabase.rpc('rpc_hack_attempt', { _def: def });
-      if (error) throw new Error(error.message);
-
-      const row = Array.isArray(data) ? (data as any[])[0] : null;
-      const outcome: string = String(row?.outcome ?? 'fail').toLowerCase();
-
-      if (outcome === 'win' || outcome === 'success') await sfx.hackWin?.();
-      else await sfx.hackFail?.();
-
-      onAfter?.();
-    } catch {
-      await sfx.hackFail?.();
+      const r = await rpcHackAttempt(target);
+      setResult(r);
+    } catch (e:any) {
+      setErr(e.message || String(e));
     } finally {
       setLoading(false);
     }
   }
 
   return (
-    <button
-      onClick={() => void onHack()}
-      disabled={!def || loading}
-      className={`px-3 py-2 rounded-xl bg-[var(--c-primary)]/80 hover:opacity-90 disabled:opacity-50 ${className}`}
-    >
-      {loading ? 'HackingвЂ¦' : 'Hack'}
-    </button>
+    <div className="space-y-2">
+      <button
+        onClick={previewHack}
+        className="px-3 py-2 rounded bg-[linear-gradient(90deg,#00F0FF,#FF3DFF)] text-black text-sm"
+      >
+        Preview Chance
+      </button>
+
+      {preview && (
+        <div className="text-xs text-gray-200">
+          Chance: {(preview.win_prob * 100).toFixed(1)}% — simulated outcome: <b>{preview.outcome}</b>
+        </div>
+      )}
+
+      <button
+        onClick={doHack}
+        disabled={loading}
+        className="mt-2 px-4 py-3 rounded-full bg-gradient-to-r from-cyan-400 to-pink-400 text-white font-bold shadow"
+      >
+        {loading ? "Hacking…" : "Hack!"}
+      </button>
+
+      {result && (
+        <div className="mt-2 text-sm text-white">
+          Result: <b>{result.result}</b> — stolen: {result.coins_stolen ?? 0}
+        </div>
+      )}
+
+      {err && <div className="text-xs text-red-300">{err}</div>}
+    </div>
   );
 }
-
