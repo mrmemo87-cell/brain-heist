@@ -1,4 +1,5 @@
-﻿import supabase from "@/lib/supabaseClient.client";
+// lib/api.ts
+import supabase from '@/lib/supabaseClient.client';
 
 export type UUID = string;
 
@@ -20,7 +21,7 @@ export type HackFeedRow = {
 
 export type HackAttemptResult = {
   ok?: boolean;
-  result?: "win" | "lose" | "shielded" | string;
+  result?: 'win' | 'lose' | 'shielded' | string;
   win_prob?: number;
   rand?: number;
   coins_stolen?: number;
@@ -31,55 +32,55 @@ export type HackAttemptResult = {
 };
 
 export async function rpcInventoryForMe() {
-  const { data, error } = await supabase.rpc("rpc_inventory_for_me");
+  const { data, error } = await supabase.rpc('rpc_inventory_for_me');
   if (error) throw error;
   return data;
 }
 
 export async function rpcActiveEffectsForMe() {
-  const { data, error } = await supabase.rpc("rpc_active_effects_for_me");
+  const { data, error } = await supabase.rpc('rpc_active_effects_for_me');
   if (error) throw error;
   return data;
 }
 
 export async function rpcInventoryActivate(item_key: string) {
-  const { data, error } = await supabase.rpc("rpc_inventory_activate", { p_item_key: item_key });
+  const { data, error } = await supabase.rpc('rpc_inventory_activate', { p_item_key: item_key });
   if (error) throw error;
   return data;
 }
 
 export async function rpcShopList() {
-  const { data, error } = await supabase.rpc("rpc_shop_list");
+  const { data, error } = await supabase.rpc('rpc_shop_list');
   if (error) throw error;
   return data;
 }
 
 export async function rpcShopBuy(item_key: string) {
-  const { data, error } = await supabase.rpc("rpc_shop_buy", { p_item_key: item_key });
+  const { data, error } = await supabase.rpc('rpc_shop_buy', { p_item_key: item_key });
   if (error) throw error;
   return data;
 }
 
 export async function rpcHackFeed(limit = 20) {
-  const { data, error } = await supabase.rpc("rpc_hack_feed", { limit_n: limit });
+  const { data, error } = await supabase.rpc('rpc_hack_feed', { limit_n: limit });
   if (error) throw error;
   return data as HackFeedRow[];
 }
 
 export async function rpcHackEmulate(target: UUID) {
-  const { data, error } = await supabase.rpc("rpc_hack_attempt_emulate", { p_target: target });
+  const { data, error } = await supabase.rpc('rpc_hack_attempt_emulate', { p_target: target });
   if (error) throw error;
   return data as HackAttemptResult;
 }
 
 export async function rpcHackAttempt(target: UUID) {
-  const { data, error } = await supabase.rpc("rpc_hack_attempt", { p_target: target });
+  const { data, error } = await supabase.rpc('rpc_hack_attempt', { p_target: target });
   if (error) throw error;
   return data as HackAttemptResult;
 }
 
 export async function rpcUpgradeStat(stat: string, amount = 1) {
-  const { data, error } = await supabase.rpc("rpc_upgrade_stat", { target: stat, amount });
+  const { data, error } = await supabase.rpc('rpc_upgrade_stat', { target: stat, amount });
   if (error) throw error;
   return data;
 }
