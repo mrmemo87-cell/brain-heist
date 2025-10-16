@@ -1,42 +1,119 @@
-"use client";
-import React, {useEffect, useState} from "react";
+// app/activity/page.tsx
+import React from "react";
 import NeonCard from "@/components/NeonCard";
-import { supabase } from "@/lib/supa";
+import Link from "next/link";
 
-type Target = { uid:string; name:string; last_online_at:string | null };
+/**
+ * Client-only small TargetsList & LiveFeed components are embedded inside this file
+ * to avoid importing fragile external modules. They simulate interactions locally.
+ */
 
-export default function ActivityPage(){
-  const [items,setItems]=useState<Target[]>([]);
-  useEffect(()=>{ (async()=>{
-    // simple public list by batch; replace with your RPC if you have it
-    const { data } = await supabase.from("users")
-      .select("uid, last_online_at")
-      .limit(50);
-    const rows = (data??[]).map((r:any)=>({
-      uid:r.uid, name:(r.uid??"player").slice(0,4), last_online_at:r.last_online_at
-    }));
-    setItems(rows as Target[]);
-  })(); },[]);
+function sampleTargets() {
+  return [
+    { uid: "a1", name: "neo", level: 5, bio: "Quiet hacker", lastSeenMins: 12 },
+    { uid: "b2", name: "byte", level: 3, bio: "Loves challenges", lastSeenMins: 45 },
+    { uid: "c3", name: "vapor", level: 7, bio: "Top of the batch", lastSeenMins: 5 },
+  ];
+}
+
+/* Client components */
+const TargetsList = () => {
+  "use client";
+  const [targets] = React.useState(sampleTargets());
+  const [cooldowns, setCooldowns] = React.useState<Record<string, number>>({});
+
+  function attemptHack(uid: string) {
+    // simulate a hack: set 60s cooldown on that uid for the attacker
+    setCooldowns((s) => ({ ...s, [uid]: 60 }));
+    // countdown runner
+    const t = setInterval(() => {
+      setCooldowns((s) => {
+        const v = (s[uid] ?? 0) - 1;
+        if (v <= 0) {
+          clearInterval(t);
+          const n = { ...s }; delete n[uid]; return n;
+        }
+        return { ...s, [uid]: v };
+      });
+    }, 1000);
+  }
+
   return (
-    <div className="grid gap-6">
-      <h1 className="text-2xl font-extrabold emoji">⚡ Activity</h1>
-      <NeonCard title="Targets (your batch)" accent="purple">
-        <ul className="space-y-3">
-          {items.map((t)=>(
-            <li key={t.uid} className="flex items-center justify-between">
-              <div>
-                <div className="font-semibold">{t.name}</div>
-                <div className="text-xs opacity-70">
-                  Online: {t.last_online_at ? new Date(t.last_online_at).toLocaleString() : "unknown"}
-                </div>
-              </div>
-              <button className="px-3 py-1 rounded bg-[rgba(255,255,255,.08)] hover:bg-[rgba(255,255,255,.12)]">
-                🗡️ Hack
-              </button>
-            </li>
-          ))}
-        </ul>
-      </NeonCard>
+    <div className="space-y-3">
+      {targets.map((t) => (
+        <div key={t.uid} className="flex items-center justify-between neon-border p-3 rounded-lg">
+          <div>
+            <div className="font-semibold neon-text">{t.name} <span className="muted text-sm">· lvl {t.level}</span></div>
+            <div className="muted text-sm">{t.bio}</div>
+          </div>
+
+          <div className="flex flex-col items-end">
+            <div className="muted text-sm">{t.lastSeenMins <= 40 ? "recent" : "offline"}</div>
+            <div className="mt-2">
+              {cooldowns[t.uid] ? (
+                <button className="neon-btn muted" disabled>Cooling {cooldowns[t.uid]}s</button>
+              ) : (
+                <button className="neon-btn" onClick={() => attemptHack(t.uid)}>Hack</button>
+              )}
+            </div>
+          </div>
+        </div>
+      ))}
     </div>
+  );
+};
+
+const LiveFeed = () => {
+  "use client";
+  const [items, setItems] = React.useState<string[]>([
+    "vapor hacked neo — +5 coins",
+    "byte activated Stealth Shield",
+    "neo answered a question — +3 coins",
+  ]);
+
+  function react(idx: number, emoji: string) {
+    const copy = [...items];
+    copy[idx] = copy[idx] + "  " + emoji;
+    setItems(copy);
+  }
+
+  return (
+    <div className="space-y-2">
+      <div className="muted text-sm">Live feed</div>
+      {items.map((it, i) => (
+        <div key={i} className="neon-border p-3 rounded-lg flex justify-between items-center">
+          <div className="text-sm">{it}</div>
+          <div className="flex gap-2">
+            <button className="neon-btn" onClick={() => react(i, "🔥")}>🔥</button>
+            <button className="neon-btn" onClick={() => react(i, "👏")}>👏</button>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+};
+
+export default function ActivityPage() {
+  return (
+    <main className="max-w-4xl mx-auto p-6 grid gap-6">
+      <header className="flex items-center justify-between">
+        <h2 className="text-2xl font-extrabold neon-text">Activity</h2>
+        <Link href="/" className="neon-btn">Home</Link>
+      </header>
+
+      <div className="grid gap-6 lg:grid-cols-3">
+        <section className="lg:col-span-2">
+          <NeonCard title="Targets (your batch)" subtitle="Click to open mini peek" accent="cyan">
+            <TargetsList />
+          </NeonCard>
+        </section>
+
+        <aside>
+          <NeonCard title="Live feed" subtitle="React & reactions" accent="pink">
+            <LiveFeed />
+          </NeonCard>
+        </aside>
+      </div>
+    </main>
   );
 }
