@@ -1,7 +1,6 @@
-'use client';
-
-import React, { useEffect, useState } from "react";
-import { rpcHackFeed } from "@/lib/api";
+// components/Feed.tsx
+import React, { useEffect, useState } from 'react';
+import { rpcHackFeed } from '@/lib/api';
 
 export default function Feed({ limit = 20 }: { limit?: number }) {
   const [rows, setRows] = useState<any[]>([]);
@@ -21,6 +20,7 @@ export default function Feed({ limit = 20 }: { limit?: number }) {
       }
     }
     load();
+    // TODO: add realtime subscription to feed table if you want
     return () => { mounted = false; };
   }, [limit]);
 
@@ -30,7 +30,7 @@ export default function Feed({ limit = 20 }: { limit?: number }) {
       {!loading && rows.length === 0 && <div className="text-sm text-gray-500">No activity yet</div>}
       {rows.map((r:any) => (
         <div key={r.id} className="flex items-center gap-3 p-2 rounded-md bg-[rgba(255,255,255,0.02)]">
-          <div className="w-10 h-10 rounded-full bg-gray-700 flex items-center justify-center text-xs">{(r.attacker_name ?? "A").slice(0,2)}</div>
+          <div className="w-10 h-10 rounded-full bg-gray-700 flex items-center justify-center text-xs">{(r.attacker_name ?? 'A').slice(0,2)}</div>
           <div className="flex-1 text-sm text-gray-200">
             <div className="text-xs text-gray-400">{new Date(r.ts).toLocaleString()}</div>
             <div>
