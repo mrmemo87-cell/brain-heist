@@ -1,6 +1,7 @@
-import React, { ReactNode } from "react";
+﻿import React, { ReactNode } from "react";
 
 type Props = {
+  subtitle?: string;
   children?: ReactNode;
   className?: string;
   title?: string;
@@ -18,7 +19,7 @@ const accentClass = (a?: string) => {
 };
 
 /**
- * NeonCard (enhanced stub) вЂ” accepts title & accent props so pages can render headers.
+ * NeonCard (enhanced stub) РІР‚вЂќ accepts title & accent props so pages can render headers.
  * Replace with your real UI later.
  */
 export default function NeonCard({ children, className = "", title, accent }: Props) {
