@@ -1,8 +1,9 @@
-﻿import React from "react";
-import ProfilePanel from "@/components/ProfilePanel";
-import Feed from "@/components/Feed";
-import Shop from "@/components/Shop";
-import Inventory from "@/components/Inventory";
+// app/profile/page.tsx
+import React from 'react';
+import ProfilePanel from '@/components/ProfilePanel';
+import Feed from '@/components/Feed';
+import Shop from '@/components/Shop';
+import Inventory from '@/components/Inventory';
 
 export default function ProfilePage() {
   return (
