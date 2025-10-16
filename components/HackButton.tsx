@@ -1,61 +1,67 @@
-"use client";
-import React from "react";
+// components/HackButton.tsx
+import React, { useState } from 'react';
+import { rpcHackAttempt, rpcHackEmulate } from '@/lib/api';
 
-/**
- * HackButton compatibility wrapper.
- * Accepts any of:
- *   - target?: string
- *   - defenderUid?: string
- *   - defenderId?: string
- * Also accepts:
- *   - className?: string
- *   - onAfter?: () => void   (called after the action completes)
- *
- * Keeps behavior minimal; replace with your full implementation later.
- */
-type Props = {
-  target?: string;
-  defenderUid?: string;
-  defenderId?: string;
-  className?: string;
-  onAfter?: () => void;
-};
+export default function HackButton({ target }: { target: string }) {
+  const [loading, setLoading] = useState(false);
+  const [preview, setPreview] = useState<any|null>(null);
+  const [result, setResult] = useState<any|null>(null);
+  const [err, setErr] = useState<string|null>(null);
 
-export default function HackButton({ target, defenderUid, defenderId, className = "", onAfter }: Props) {
-  const actualTarget = target ?? defenderUid ?? defenderId;
-  if (!actualTarget) {
-    return (
-      <button disabled className={`px-3 py-2 rounded-md opacity-50 ${className}`}>
-        Hack
-      </button>
-    );
+  async function previewHack() {
+    setErr(null);
+    try {
+      const p = await rpcHackEmulate(target);
+      setPreview(p);
+    } catch (e:any) {
+      setErr(e.message || String(e));
+    }
   }
 
-  const handleClick = async () => {
+  async function doHack() {
+    setErr(null);
+    setLoading(true);
     try {
-      // placeholder: integrate your RPC call here
-      // e.g. await supabase.rpc('rpc_hack_attempt', { p_target: actualTarget })
-      console.log("Hack clicked for", actualTarget);
-
-      // simulate async call (remove if you call real RPC)
-      // await new Promise((r) => setTimeout(r, 200));
-
-      // call onAfter callback if provided
-      if (typeof onAfter === "function") {
-        try { onAfter(); } catch (e) { console.error("onAfter callback error", e); }
-      }
-    } catch (e) {
-      console.error("HackButton error", e);
-      // still call onAfter if present to allow UI to recover
-      if (typeof onAfter === "function") {
-        try { onAfter(); } catch (ee) { console.error("onAfter callback error", ee); }
-      }
+      const r = await rpcHackAttempt(target);
+      setResult(r);
+      // refresh UI (profile/feed) via events or re-fetch in parent
+    } catch (e:any) {
+      setErr(e.message || String(e));
+    } finally {
+      setLoading(false);
     }
-  };
+  }
 
   return (
-    <button onClick={handleClick} className={`px-3 py-2 rounded-md hover:scale-[1.02] transition ${className}`}>
-      Hack
-    </button>
+    <div className="space-y-2">
+      <button
+        onClick={previewHack}
+        className="px-3 py-2 rounded bg-[linear-gradient(90deg,#00F0FF,#FF3DFF)] text-black text-sm"
+      >
+        Preview Chance
+      </button>
+
+      {preview && (
+        <div className="text-xs text-gray-200">
+          Chance: {(preview.win_prob * 100).toFixed(1)}% — simulated outcome: <b>{preview.outcome}</b>
+        </div>
+      )}
+
+      <button
+        onClick={doHack}
+        disabled={loading}
+        className="mt-2 px-4 py-3 rounded-full bg-gradient-to-r from-cyan-400 to-pink-400 text-white font-bold shadow"
+      >
+        {loading ? 'Hacking…' : 'Hack!'}
+      </button>
+
+      {result && (
+        <div className="mt-2 text-sm text-white">
+          Result: <b>{result.result}</b> — stolen: {result.coins_stolen ?? 0}
+        </div>
+      )}
+
+      {err && <div className="text-xs text-red-300">{err}</div>}
+    </div>
   );
 }
