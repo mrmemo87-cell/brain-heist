@@ -1,4 +1,6 @@
-﻿import React, { useEffect, useState } from "react";
+'use client';
+
+import React, { useEffect, useState } from "react";
 import { rpcInventoryForMe, rpcInventoryActivate } from "@/lib/api";
 
 export default function Inventory() {

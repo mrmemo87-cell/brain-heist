@@ -1,4 +1,6 @@
-﻿import React, { useEffect, useState } from "react";
+'use client';
+
+import React, { useEffect, useState } from "react";
 import { rpcShopList, rpcShopBuy } from "@/lib/api";
 
 export default function Shop() {

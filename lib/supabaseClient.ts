@@ -1,10 +1,13 @@
-﻿'use client';
-import { createClient } from '@supabase/supabase-js';
+/**
+ * lib/supabaseClient.ts
+ * Minimal compatibility alias that re-exports the browser client and provides a named `supabase` export.
+ * If you keep a server/client split, replace this with your preferred server client file.
+ */
+import client from "@/lib/supabaseClient.client";
 
-const url = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+const supabase = client;
 
-export const supabase = createClient(url, anon, {
-  auth: { persistSession: true, autoRefreshToken: true }
-});
-
+// default export (common import style)
+// named export `supabase` so code that does `import { supabase } from "@/lib/supabaseClient"` works
+export default client;
+export { supabase, client as supabaseClient };

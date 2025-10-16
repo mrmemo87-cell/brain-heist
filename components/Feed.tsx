@@ -1,4 +1,6 @@
-﻿import React, { useEffect, useState } from "react";
+'use client';
+
+import React, { useEffect, useState } from "react";
 import { rpcHackFeed } from "@/lib/api";
 
 export default function Feed({ limit = 20 }: { limit?: number }) {

@@ -1,4 +1,6 @@
-﻿import React, { useEffect, useState } from "react";
+﻿'use client';
+
+import React, { useEffect, useState } from "react";
 import supabase from "@/lib/supabaseClient.client";
 import { rpcActiveEffectsForMe } from "@/lib/api";
 
@@ -39,11 +41,23 @@ export default function ProfilePanel() {
     const subscription = supabase.auth.onAuthStateChange(() => load());
     return () => {
       mounted = false;
-      if (subscription && typeof subscription.unsubscribe === "function") subscription.unsubscribe();
+            try {
+        const subAny: any = subscription;
+        const maybeSub = subAny && subAny.data && subAny.data.subscription ? subAny.data.subscription : subAny;
+        if (maybeSub && typeof maybeSub.unsubscribe === "function") {
+          maybeSub.unsubscribe();
+        } else if (maybeSub && typeof maybeSub.release === "function") {
+          maybeSub.release();
+        }
+      } catch (e) {
+        // don't crash on teardown
+        // eslint-disable-next-line no-console
+        console.warn("Error while unsubscribing/tearing down subscription:", e);
+      }
     };
   }, []);
 
-  if (loading) return <div className="p-4">Loading profile…</div>;
+  if (loading) return <div className="p-4">Loading profileвЂ¦</div>;
   if (!user) return <div className="p-4">Not signed in</div>;
 
   return (
