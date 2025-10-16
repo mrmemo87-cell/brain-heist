@@ -1,25 +1,66 @@
 // app/profile/page.tsx
-import React from 'react';
-import ProfilePanel from '@/components/ProfilePanel';
-import Feed from '@/components/Feed';
-import Shop from '@/components/Shop';
-import Inventory from '@/components/Inventory';
+import React from "react";
+import NeonCard from "@/components/NeonCard";
+import Link from "next/link";
+
+/* Small client Inventory demo inside the page */
+const InventoryPanel = () => {
+  "use client";
+  const [items, setItems] = React.useState([
+    { key: "boost1", name: "XP Booster", qty: 1 },
+    { key: "shield", name: "Mini Shield", qty: 2 }
+  ]);
+  const [active, setActive] = React.useState<Record<string, boolean>>({});
+
+  function activate(key: string) {
+    setActive((s) => ({ ...s, [key]: true }));
+    setTimeout(() => setActive((s) => ({ ...s, [key]: false })), 8_000);
+  }
+
+  return (
+    <div className="space-y-3">
+      {items.map(it => (
+        <div key={it.key} className="neon-border p-3 rounded-lg flex justify-between items-center">
+          <div>
+            <div className="font-semibold">{it.name} <span className="muted text-sm">x{it.qty}</span></div>
+          </div>
+          <div>
+            <button className="neon-btn" onClick={() => activate(it.key)}>
+              {active[it.key] ? "Active" : "Activate"}
+            </button>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+};
 
 export default function ProfilePage() {
-  return (
-    <div className="min-h-screen bg-[#0B0F1A] p-6">
-      <div className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="col-span-1 space-y-4">
-          <ProfilePanel />
-          <Inventory />
-          <Shop />
-        </div>
+  // server-side user summary (placeholder)
+  const user = { name: "you", xp: 120, rank: "Script Kiddie", bio: "Learning to hack ethically" };
 
-        <div className="md:col-span-2">
-          <h2 className="text-2xl font-bold text-white mb-4">Live Feed</h2>
-          <Feed limit={40} />
+  return (
+    <main className="max-w-3xl mx-auto p-6 space-y-6">
+      <header className="flex items-center justify-between">
+        <h2 className="text-2xl font-extrabold neon-text">Profile</h2>
+        <Link href="/" className="neon-btn">Home</Link>
+      </header>
+
+      <NeonCard title={user.name} subtitle={user.rank} accent="cyan">
+        <div className="grid gap-4 md:grid-cols-2">
+          <div>
+            <div className="muted">XP</div>
+            <div className="text-xl font-bold neon-text">{user.xp}</div>
+            <div className="muted mt-2">Bio</div>
+            <div>{user.bio}</div>
+          </div>
+
+          <div>
+            <div className="muted">Inventory</div>
+            <InventoryPanel />
+          </div>
         </div>
-      </div>
-    </div>
+      </NeonCard>
+    </main>
   );
 }
