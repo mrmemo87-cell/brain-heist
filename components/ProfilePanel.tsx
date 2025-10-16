@@ -1,8 +1,7 @@
-﻿'use client';
-
-import React, { useEffect, useState } from "react";
-import supabase from "@/lib/supabaseClient.client";
-import { rpcActiveEffectsForMe } from "@/lib/api";
+// components/ProfilePanel.tsx
+import React, { useEffect, useState } from 'react';
+import supabase from '@/lib/supabaseClient.client';
+import { rpcActiveEffectsForMe } from '@/lib/api';
 
 export default function ProfilePanel() {
   const [user, setUser] = useState<any | null>(null);
@@ -21,9 +20,9 @@ export default function ProfilePanel() {
         return;
       }
 
-      const { data: u, error } = await supabase.from("users").select("*").eq("uid", session.user.id).single();
+      const { data: u, error } = await supabase.from('users').select('*').eq('uid', session.user.id).single();
       if (error) {
-        console.error("fetch user", error);
+        console.error('fetch user', error);
       } else if (mounted) {
         setUser(u);
       }
@@ -41,32 +40,20 @@ export default function ProfilePanel() {
     const subscription = supabase.auth.onAuthStateChange(() => load());
     return () => {
       mounted = false;
-            try {
-        const subAny: any = subscription;
-        const maybeSub = subAny && subAny.data && subAny.data.subscription ? subAny.data.subscription : subAny;
-        if (maybeSub && typeof maybeSub.unsubscribe === "function") {
-          maybeSub.unsubscribe();
-        } else if (maybeSub && typeof maybeSub.release === "function") {
-          maybeSub.release();
-        }
-      } catch (e) {
-        // don't crash on teardown
-        // eslint-disable-next-line no-console
-        console.warn("Error while unsubscribing/tearing down subscription:", e);
-      }
+      if (subscription && typeof subscription.unsubscribe === 'function') subscription.unsubscribe();
     };
   }, []);
 
-  if (loading) return <div className="p-4">Loading profileвЂ¦</div>;
+  if (loading) return <div className="p-4">Loading profile…</div>;
   if (!user) return <div className="p-4">Not signed in</div>;
 
   return (
     <div className="p-4 rounded-lg shadow bg-[rgba(255,255,255,0.03)]">
       <div className="flex items-center gap-4">
-        <img src={user.avatar_url ?? "/avatar-placeholder.svg"} alt="avatar" className="w-14 h-14 rounded-full" />
+        <img src={user.avatar_url ?? '/avatar-placeholder.png'} alt="avatar" className="w-14 h-14 rounded-full" />
         <div>
           <div className="text-lg font-semibold text-white">{user.uid}</div>
-          <div className="text-sm text-gray-300">Rank: {user.rank_badge ?? "Unknown"}</div>
+          <div className="text-sm text-gray-300">Rank: {user.rank_badge ?? 'Unknown'}</div>
         </div>
       </div>
 
