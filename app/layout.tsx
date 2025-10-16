@@ -1,16 +1,17 @@
-import "./globals.css";
-import type { Metadata } from "next";
-import NavBar from "@/components/NavBar";
+import './globals.css';
+import '@fontsource/noto-color-emoji'; // emoji font for consistency
 
-export const metadata: Metadata = { title: "Brain Heist" };
+export const metadata = {
+  title: 'Brain Heist',
+  description: 'Hacker vibes, neon leaderboard, learn & play',
+};
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body className="min-h-screen bg-grid text-[var(--c-text)]">
-        <header className="bh-header"><NavBar/></header>
-        <main className="bh-main"><div className="bh-shell">{children}</div></main>
+      <body>
+        {children}
       </body>
     </html>
   );
-}import '@fontsource/noto-color-emoji';
+}
