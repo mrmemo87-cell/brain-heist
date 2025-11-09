@@ -88,14 +88,7 @@ export default function PlayerPeek({
         </div>
 
         <div className="mt-3">
-          <HackButton
-            defenderId={row.user_id}
-            className="w-full"
-            onAfter={() => {
-              // If you want to auto-close after a hack, uncomment:
-              // onClose();
-            }}
-          />
+          <HackButton target={row.user_id} />
         </div>
 
         <div className="mt-4 text-xs text-ink-400">

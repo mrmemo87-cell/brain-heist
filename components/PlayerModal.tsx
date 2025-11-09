@@ -38,7 +38,7 @@ export default function PlayerPeek({
           </div>
         </div>
       </div>
-      <HackButton defenderUid={uid} />
+      <HackButton target={uid} />
     </div>
   );
 }
