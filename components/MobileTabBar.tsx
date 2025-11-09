@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -6,13 +6,14 @@ import React, { useEffect, useRef } from 'react';
 import { addRipple, RippleBox } from '@/components/ui/Ripple';
 
 const TABS = [
-  { href: '/',            label: 'Home',       icon: 'рџЏ ' },
-  { href: '/activity',    label: 'Activity',   icon: 'рџ“°' },
-  { href: '/tasks',       label: 'Tasks',      icon: 'вњ…' },
-  { href: '/leaderboard', label: 'Top',        icon: 'рџЏ†' },
-  { href: '/shop',        label: 'Shop',       icon: 'рџ›’' },
-  { href: '/inventory',   label: 'Bag',        icon: 'рџЋ’' },
-  { href: '/profile',     label: 'Me',         icon: 'рџ‘¤' },
+  { href: '/',            label: 'Home',       icon: '🏠' },
+  { href: '/activity',    label: 'Activity',   icon: '📰' },
+  { href: '/tasks',       label: 'Tasks',      icon: '✅' },
+  { href: '/leaderboard', label: 'Top',        icon: '🏆' },
+  { href: '/shop',        label: 'Shop',       icon: '🛒' },
+  { href: '/inventory',   label: 'Bag',        icon: '🎒' },
+  { href: '/profile',     label: 'Me',         icon: '👤' },
+  { href: '/settings',    label: 'Settings',   icon: '⚙️' },
 ];
 
 export default function MobileTabBar() {
@@ -56,7 +57,7 @@ export default function MobileTabBar() {
         })}
       </ul>
 
-      <ul className="grid grid-cols-2 gap-1 px-2 pb-2">
+      <ul className="grid grid-cols-3 gap-1 px-2 pb-2">
         {TABS.slice(5).map(t => {
           const active = pathname === t.href;
           return (
@@ -78,4 +79,3 @@ export default function MobileTabBar() {
     </nav>
   );
 }
-

@@ -1,5 +1,8 @@
 import './globals.css';
 import '@fontsource/noto-color-emoji'; // emoji font for consistency
+import ClientProviders from '@/components/ClientProviders';
+import TopBar from '@/components/TopBar';
+import MobileTabBar from '@/components/MobileTabBar';
 
 export const metadata = {
   title: 'Brain Heist',
@@ -10,7 +13,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en">
       <body>
-        {children}
+        <ClientProviders>
+          <TopBar />
+          {children}
+          <MobileTabBar />
+        </ClientProviders>
       </body>
     </html>
   );
