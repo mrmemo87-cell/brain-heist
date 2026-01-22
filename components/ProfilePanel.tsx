@@ -37,10 +37,10 @@ export default function ProfilePanel() {
       }
     }
     load();
-    const subscription = supabase.auth.onAuthStateChange(() => load());
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(() => load());
     return () => {
       mounted = false;
-      if (subscription && typeof subscription.unsubscribe === 'function') subscription.unsubscribe();
+      subscription.unsubscribe();
     };
   }, []);
 

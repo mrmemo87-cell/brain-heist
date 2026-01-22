@@ -147,7 +147,7 @@ export default function TargetsList() {
                   </div>
                 </div>
               </div>
-              <HackButton defenderUid={t.uid} />
+              <HackButton target={t.uid} />
             </li>
           ))}
         </ul>

@@ -8,3 +8,4 @@ supabase/.branches
 
 *.bak*
 prepatch-backups-*
+.env.local
